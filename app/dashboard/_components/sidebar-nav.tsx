@@ -20,8 +20,9 @@ import {
 
 interface NavItem {
     title: string
-    href: string
-    icon: LucideIcon
+    href?: string
+    icon?: LucideIcon
+    isGroupTitle?: boolean
     items?: {
         title: string
         href: string
@@ -75,6 +76,18 @@ function SidebarNavItem({ item, collapsed, pathname, onItemClick }: SidebarNavIt
         }
     }, [isActive])
 
+    // Render group title (non-clickable header)
+    if (item.isGroupTitle) {
+        if (collapsed) {
+            return null // Don't show group titles when collapsed
+        }
+        return (
+            <div className="px-4 py-2 text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
+                {item.title}
+            </div>
+        )
+    }
+
     if (item.items) {
         return (
             <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full">
@@ -90,7 +103,7 @@ function SidebarNavItem({ item, collapsed, pathname, onItemClick }: SidebarNavIt
                                     )}
                                     onClick={() => setIsOpen(!isOpen)}
                                 >
-                                    <item.icon className="h-4 w-4" />
+                                    {item.icon && <item.icon className="h-4 w-4" />}
                                     <span className="sr-only">{item.title}</span>
                                 </Button>
                             </TooltipTrigger>
@@ -108,7 +121,7 @@ function SidebarNavItem({ item, collapsed, pathname, onItemClick }: SidebarNavIt
                                 )}
                             >
                                 <div className="flex items-center gap-2">
-                                    <item.icon className="h-4 w-4" />
+                                    {item.icon && <item.icon className="h-4 w-4" />}
                                     <span>{item.title}</span>
                                 </div>
                                 {isOpen ? (
@@ -141,6 +154,11 @@ function SidebarNavItem({ item, collapsed, pathname, onItemClick }: SidebarNavIt
                 </CollapsibleContent>
             </Collapsible>
         )
+    }
+
+    // Regular nav item with link
+    if (!item.href || !item.icon) {
+        return null // Skip items without href or icon (shouldn't happen but for type safety)
     }
 
     return (

@@ -19,8 +19,7 @@ import {
   IconUsers,
 } from "@tabler/icons-react"
 
-import { NavJobs } from "@/components/nav-jobs"
-import { NavMain } from "@/components/nav-main"
+import { NavHR } from "@/components/nav-hr"
 import { NavSecondary } from "@/components/nav-secondary"
 import { NavUser } from "@/components/nav-user"
 import {
@@ -31,7 +30,10 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from "@/components/ui/sidebar"
+import Link from "next/link"
+import { Logo } from "./logo"
 
 const data = {
   user: {
@@ -39,30 +41,21 @@ const data = {
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
-  navMain: [
-    {
-      title: "Overview",
-      url: "/dashboard",
-      icon: IconDashboard,
-    },
-  ],
-  jobs: [
-    {
-      title: "Jobs",
-      icon: IconFileDescription,
-      url: "/dashboard/jobs",
-      items: [
-        {
-          title: "Open positions",
-          url: "/dashboard/jobs/open-positions",
-        },
-        {
-          title: "Job Applications",
-          url: "/dashboard/jobs/applications",
-        },
-      ],
-    },
-  ],
+  hrGroup: {
+    title: "HR",
+    items: [
+      {
+        title: "Jobs",
+        icon: IconFileDescription,
+        url: "/dashboard/jobs",
+      },
+      {
+        title: "Applications",
+        icon: IconListDetails,
+        url: "/dashboard/applications",
+      },
+    ],
+  },
   navSecondary: [
     {
       title: "Settings",
@@ -82,17 +75,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               asChild
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
-              <a href="#">
-                <IconInnerShadowTop className="!size-5" />
-                <span className="text-base font-semibold">Acme Inc.</span>
-              </a>
+              <Logo />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+      <SidebarSeparator className="mt-1 mb-2" />
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavJobs items={data.jobs} />
+        <SidebarMenu>
+          <SidebarMenuItem key="Overview">
+            <SidebarMenuButton tooltip="Overview">
+              <Link className="flex items-center gap-2" href="/dashboard">
+                <IconDashboard />
+                <span>Overview</span>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+        <NavHR title={data.hrGroup.title} items={data.hrGroup.items} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
       <SidebarFooter>
