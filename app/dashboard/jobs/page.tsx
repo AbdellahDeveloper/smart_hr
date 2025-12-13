@@ -451,7 +451,6 @@ export default function JobsPage() {
                                     const count = table.getFilteredSelectedRowModel().rows.length
                                     toast.success(`${count} job(s) deleted`)
                                     table.resetRowSelection()
-                                    // Here you would typically delete the selected jobs from your backend
                                 }}
                                 className="text-destructive focus:text-destructive"
                             >
