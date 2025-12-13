@@ -80,11 +80,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarSeparator className="mt-1 mb-2" />
+      <SidebarSeparator className="mt-1 mb-2  " />
       <SidebarContent>
         <SidebarMenu>
           <SidebarMenuItem key="Overview">
-            <SidebarMenuButton tooltip="Overview">
+            <SidebarMenuButton asChild tooltip="Overview">
               <Link className="flex items-center gap-2" href="/dashboard">
                 <IconDashboard />
                 <span>Overview</span>
