@@ -1,11 +1,10 @@
-"use client";
 
-import { useSession } from "@/lib/auth-client";
+import { getSession } from "@/lib/auth-client";
 import Link from "next/link";
 import { Button } from "./ui/button";
 
-export default function SignInButton() {
-    const { data: session } = useSession();
+export default async function SignInButton() {
+    const session = await getSession();
 
     return (
         session ?

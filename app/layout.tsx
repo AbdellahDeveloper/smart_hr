@@ -5,6 +5,7 @@ import "./globals.css";
 import { ThemeProvider } from "next-themes";
 import { Header } from "@/components/navbar";
 import { Toaster } from "@/components/ui/sonner";
+import SignInButton from "@/components/signin-button";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,7 +27,9 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="light">
-      <Header />
+      <Header >
+        <SignInButton />
+      </Header>
       {children}
       <Toaster />
     </ThemeProvider>

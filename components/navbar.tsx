@@ -1,16 +1,14 @@
 "use client";
 import { useScroll } from "@/hooks/use-scroll";
 import { Logo } from "@/components/logo";
-import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { MobileNav } from "@/components/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
-import SignInButton from "./signin-button";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { usePathname } from "next/navigation";
 
-export function Header() {
+export function Header({ children }: { children: React.ReactNode }) {
     const scrolled = useScroll(10);
     const pathname = usePathname()
     if (pathname.startsWith("/dashboard")) return null
@@ -52,9 +50,11 @@ export function Header() {
                 <div className="flex items-center gap-2">
                     <div className="hidden items-center gap-1 md:flex">
                         <ThemeToggle />
-                        <SignInButton />
+                        {children}
                     </div>
-                    <MobileNav />
+                    <MobileNav>
+                        {children}
+                    </MobileNav>
                 </div>
             </nav>
         </header>

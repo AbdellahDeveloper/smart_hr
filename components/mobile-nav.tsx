@@ -3,12 +3,10 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Sun, Moon, Search } from "lucide-react";
-import { Logo } from "@/components/logo";
 import { useTheme } from "next-themes";
-import SignInButton from "./signin-button";
 import { Input } from "@/components/ui/input";
 
-export function MobileNav() {
+export function MobileNav({ children }: { children: React.ReactNode }) {
     const { setTheme, theme } = useTheme();
     const [isOpen, setIsOpen] = React.useState(false);
 
@@ -56,7 +54,7 @@ export function MobileNav() {
 
                     <div className="flex flex-col gap-4">
                         <div className="flex flex-col gap-2 w-full">
-                            <SignInButton />
+                            {children}
                         </div>
 
                         <div className="grid grid-cols-2 gap-2 p-1 bg-muted rounded-lg">
