@@ -7,6 +7,8 @@ import { Header } from "@/components/navbar";
 import { Toaster } from "@/components/ui/sonner";
 import SignInButton from "@/components/signin-button";
 
+export const dynamic = 'force-dynamic';
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
