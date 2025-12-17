@@ -31,6 +31,7 @@ export async function signUp(formData: FormData) {
                 lastName,
             },
         });
+        await resendOtp(email);
         return { success: true, url: `/auth/verify-email?email=${encodeURIComponent(email)}` };
     } catch (error: any) {
         if (error.body?.message) {
@@ -70,6 +71,7 @@ export async function signIn(formData: FormData) {
         });
 
         if (session && !session.user.emailVerified) {
+            await resendOtp(email);
             return {
                 success: false,
                 error: "Please verify your email address.",
@@ -87,6 +89,7 @@ export async function signIn(formData: FormData) {
 
         // If the error suggests unverified email, provide the redirect URL
         if (errorMessage.toLowerCase().includes("verify")) {
+            await resendOtp(email);
             return {
                 success: false,
                 error: errorMessage,

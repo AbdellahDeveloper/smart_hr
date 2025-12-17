@@ -1,52 +1,107 @@
+import { Suspense } from "react"
 import { JobCard, type Job } from "@/components/job-card"
 import { JobsFilter } from "@/components/jobs-filter"
+import { Skeleton } from "@/components/ui/skeleton"
 
-const MOCK_JOBS: Job[] = [
-    {
-        id: "1",
-        title: "Senior Frontend Engineer",
-        company: "TechFlow Inc",
-        logo: "https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg", // Using Netflix logo as placeholder per image
-        location: "San Francisco, CA",
-        type: "Full-time",
-        salary: "$150k - $200k",
-        description: "Join our team to build the next generation of developer tools. You'll work on challenging problems with a talented team.",
-        tags: ["React", "TypeScript", "Next.js", "Tailwind CSS", "5+ years"],
-        postedAt: "2d ago",
-        applicants: 47,
-        isRemote: true
-    },
-    {
-        id: "2",
-        title: "Product Designer",
-        company: "Creative Studio",
-        logo: "",
-        location: "New York, NY",
-        type: "Full-time",
-        salary: "$120k - $160k",
-        description: "We are looking for a creative Product Designer to join our design team. You will be responsible for designing user-centric interfaces.",
-        tags: ["Figma", "UI/UX", "Prototyping", "Design System"],
-        postedAt: "4h ago",
-        applicants: 12,
-        isRemote: false
-    },
-    {
-        id: "3",
-        title: "Backend Engineer",
-        company: "DataSystems",
-        logo: "",
-        location: "Austin, TX",
-        type: "Contract",
-        salary: "$80 - $120 / hr",
-        description: "Looking for an experienced Backend Engineer to help scale our infrastructure. Experience with Go and Kubernetes is a plus.",
-        tags: ["Go", "Kubernetes", "PostgreSQL", "Microservices"],
-        postedAt: "1d ago",
-        applicants: 23,
-        isRemote: true
+interface SearchParams {
+    search?: string
+    employmentType?: string
+    workMode?: string
+    location?: string
+    page?: string
+}
+
+async function getJobs(searchParams: SearchParams): Promise<{
+    jobs: Job[]
+    pagination: { page: number; limit: number; total: number; totalPages: number }
+}> {
+    const params = new URLSearchParams()
+
+    if (searchParams.search) params.set("search", searchParams.search)
+    if (searchParams.employmentType) params.set("employmentType", searchParams.employmentType)
+    if (searchParams.workMode) params.set("workMode", searchParams.workMode)
+    if (searchParams.location) params.set("location", searchParams.location)
+    if (searchParams.page) params.set("page", searchParams.page)
+
+    // Use absolute URL for server-side fetching
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const response = await fetch(`${baseUrl}/api/jobs?${params.toString()}`, {
+        cache: "no-store",
+    })
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch jobs")
     }
-]
 
-export default function JobsPage() {
+    return response.json()
+}
+
+function JobsSkeleton() {
+    return (
+        <div className="grid gap-4">
+            {[1, 2, 3].map((i) => (
+                <div key={i} className="border rounded-lg p-6 space-y-4">
+                    <div className="flex gap-4">
+                        <Skeleton className="h-12 w-12 rounded-lg" />
+                        <div className="space-y-2 flex-1">
+                            <Skeleton className="h-5 w-1/3" />
+                            <Skeleton className="h-4 w-1/4" />
+                            <Skeleton className="h-4 w-1/2" />
+                        </div>
+                    </div>
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <div className="flex gap-2">
+                        <Skeleton className="h-6 w-16 rounded-full" />
+                        <Skeleton className="h-6 w-20 rounded-full" />
+                        <Skeleton className="h-6 w-14 rounded-full" />
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
+}
+
+async function JobsList({ searchParams }: { searchParams: SearchParams }) {
+    const { jobs, pagination } = await getJobs(searchParams)
+
+    if (jobs.length === 0) {
+        return (
+            <div className="text-center py-12 border rounded-lg bg-muted/20">
+                <h3 className="text-lg font-semibold mb-2">No jobs found</h3>
+                <p className="text-muted-foreground">
+                    Try adjusting your search or filters to find more opportunities.
+                </p>
+            </div>
+        )
+    }
+
+    return (
+        <div className="space-y-6">
+            <div className="grid gap-4">
+                {jobs.map((job) => (
+                    <JobCard key={job.id} job={job} />
+                ))}
+            </div>
+
+            {/* Pagination info */}
+            <div className="text-center text-sm text-muted-foreground">
+                Showing {jobs.length} of {pagination.total} jobs
+                {pagination.totalPages > 1 && (
+                    <span> • Page {pagination.page} of {pagination.totalPages}</span>
+                )}
+            </div>
+        </div>
+    )
+}
+
+export default async function JobsPage({
+    searchParams,
+}: {
+    searchParams: Promise<SearchParams>
+}) {
+    const params = await searchParams
+
     return (
         <div className="container mx-auto py-10 px-4 max-w-5xl">
             <div className="text-center mb-10">
@@ -56,13 +111,13 @@ export default function JobsPage() {
                 </p>
             </div>
 
-            <JobsFilter />
+            <Suspense fallback={<div className="mb-8 space-y-4"><Skeleton className="h-10 w-full" /></div>}>
+                <JobsFilter />
+            </Suspense>
 
-            <div className="grid gap-4">
-                {MOCK_JOBS.map((job) => (
-                    <JobCard key={job.id} job={job} />
-                ))}
-            </div>
+            <Suspense fallback={<JobsSkeleton />}>
+                <JobsList searchParams={params} />
+            </Suspense>
         </div>
     )
 }

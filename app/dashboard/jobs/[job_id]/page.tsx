@@ -15,24 +15,23 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-
-import jobsData from "../../data.json"
+import { getJobById, updateJob } from "@/lib/actions/jobs"
 
 type Job = {
     id: string
     position: string
     company: string
-    logo: string
+    logo: string | null
     location: string
-    employmentType: "full-time" | "part-time" | "contract"
-    workMode: "onsite" | "hybrid" | "remote"
+    employmentType: string
+    workMode: string
     salaryMin: number
     salaryMax: number
-    salaryCurrency?: string
-    status: "open" | "closed"
+    salaryCurrency: string
+    status: string
     description: string
     tags: string[]
-    postedAt: string
+    postedAt: Date
     applicants: number
 }
 
@@ -41,22 +40,43 @@ export default function JobEditPage() {
     const router = useRouter()
     const jobId = params.job_id as string
 
-    // Find the job from data
-    const originalJob = (jobsData as Job[]).find((job) => job.id === jobId)
-
     // Form state
     const [formData, setFormData] = React.useState<Job | null>(null)
+    const [originalJob, setOriginalJob] = React.useState<Job | null>(null)
     const [tagsInput, setTagsInput] = React.useState("")
     const [currency, setCurrency] = React.useState("USD")
+    const [isLoading, setIsLoading] = React.useState(true)
+    const [isSaving, setIsSaving] = React.useState(false)
 
-    // Initialize form data
+    // Fetch job data
     React.useEffect(() => {
-        if (originalJob) {
-            setFormData(originalJob)
-            setTagsInput(originalJob.tags.join(", "))
-            setCurrency(originalJob.salaryCurrency || "USD")
+        async function fetchJob() {
+            try {
+                const job = await getJobById(jobId)
+                if (job) {
+                    setOriginalJob(job)
+                    setFormData(job)
+                    setTagsInput(job.tags.join(", "))
+                    setCurrency(job.salaryCurrency || "USD")
+                }
+            } catch (error) {
+                toast.error("Failed to load job")
+            } finally {
+                setIsLoading(false)
+            }
         }
-    }, [originalJob])
+        fetchJob()
+    }, [jobId])
+
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <p className="text-muted-foreground">Loading job...</p>
+                </div>
+            </div>
+        )
+    }
 
     if (!originalJob || !formData) {
         return (
@@ -72,7 +92,7 @@ export default function JobEditPage() {
         )
     }
 
-    const handleInputChange = (field: keyof Job, value: any) => {
+    const handleInputChange = (field: keyof Job, value: string | number | string[]) => {
         setFormData((prev) => prev ? { ...prev, [field]: value } : null)
     }
 
@@ -82,10 +102,32 @@ export default function JobEditPage() {
         handleInputChange("tags", tagsArray)
     }
 
-    const handleSave = () => {
-        // Here you would typically send the data to your backend
-        toast.success("Job updated successfully!")
-        console.log("Saved data:", formData)
+    const handleSave = async () => {
+        if (!formData) return
+
+        setIsSaving(true)
+        try {
+            await updateJob(jobId, {
+                position: formData.position,
+                company: formData.company,
+                logo: formData.logo || undefined,
+                location: formData.location,
+                employmentType: formData.employmentType as "full-time" | "part-time" | "contract",
+                workMode: formData.workMode as "onsite" | "hybrid" | "remote",
+                salaryMin: formData.salaryMin,
+                salaryMax: formData.salaryMax,
+                salaryCurrency: formData.salaryCurrency,
+                status: formData.status as "open" | "closed",
+                description: formData.description,
+                tags: formData.tags,
+            })
+            toast.success("Job updated successfully!")
+            router.push("/dashboard/jobs")
+        } catch (error) {
+            toast.error("Failed to update job")
+        } finally {
+            setIsSaving(false)
+        }
     }
 
     const handleCancel = () => {
@@ -394,7 +436,7 @@ export default function JobEditPage() {
                         </div>
                         <div className="space-y-2">
                             <Input
-                                value={formData.postedAt}
+                                value={formData.postedAt.toISOString()}
                                 disabled
                                 className="bg-muted"
                             />

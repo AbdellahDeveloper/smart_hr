@@ -128,6 +128,8 @@ exports.Prisma.UserScalarFieldEnum = {
   email: 'email',
   emailVerified: 'emailVerified',
   image: 'image',
+  companyName: 'companyName',
+  profilePicture: 'profilePicture',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -168,6 +170,44 @@ exports.Prisma.VerificationScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.JobScalarFieldEnum = {
+  id: 'id',
+  position: 'position',
+  company: 'company',
+  logo: 'logo',
+  location: 'location',
+  employmentType: 'employmentType',
+  workMode: 'workMode',
+  salaryMin: 'salaryMin',
+  salaryMax: 'salaryMax',
+  salaryCurrency: 'salaryCurrency',
+  status: 'status',
+  description: 'description',
+  tags: 'tags',
+  postedAt: 'postedAt',
+  applicants: 'applicants',
+  userId: 'userId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ApplicationScalarFieldEnum = {
+  id: 'id',
+  fullName: 'fullName',
+  gender: 'gender',
+  email: 'email',
+  phone: 'phone',
+  cvUrl: 'cvUrl',
+  coverLetter: 'coverLetter',
+  status: 'status',
+  appliedAt: 'appliedAt',
+  experience: 'experience',
+  location: 'location',
+  jobId: 'jobId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -188,7 +228,9 @@ exports.Prisma.ModelName = {
   User: 'User',
   Session: 'Session',
   Account: 'Account',
-  Verification: 'Verification'
+  Verification: 'Verification',
+  Job: 'Job',
+  Application: 'Application'
 };
 
 /**

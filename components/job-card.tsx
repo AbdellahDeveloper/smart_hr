@@ -1,42 +1,84 @@
+"use client"
+
+import Link from "next/link"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Bookmark, Briefcase, Clock, DollarSign, MapPin, Users } from "lucide-react"
+import { formatDistanceToNow } from "date-fns"
+import { useSavedJobs } from "@/hooks/use-saved-jobs"
+import { cn } from "@/lib/utils"
 
 export interface Job {
     id: string
-    title: string
+    position: string
     company: string
-    logo: string
+    logo: string | null
     location: string
-    type: string
-    salary: string
+    employmentType: string
+    workMode: string
+    salaryMin: number
+    salaryMax: number
+    salaryCurrency: string
     description: string
     tags: string[]
-    postedAt: string
+    postedAt: string | Date
     applicants: number
-    isRemote?: boolean
 }
 
 interface JobCardProps {
     job: Job
 }
 
+function formatSalary(min: number, max: number, currency: string): string {
+    const formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: currency,
+        maximumFractionDigits: 0,
+    })
+    return `${formatter.format(min)} - ${formatter.format(max)}`
+}
+
+function formatEmploymentType(type: string): string {
+    return type.split('-').map(word =>
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join('-')
+}
+
+function formatPostedAt(date: string | Date): string {
+    try {
+        const dateObj = typeof date === 'string' ? new Date(date) : date
+        return formatDistanceToNow(dateObj, { addSuffix: true })
+    } catch {
+        return 'Recently'
+    }
+}
+
 export function JobCard({ job }: JobCardProps) {
+    const isRemote = job.workMode === "remote"
+    const { isJobSaved, toggleSaveJob } = useSavedJobs()
+    const isSaved = isJobSaved(job.id)
+
+    const handleSaveClick = (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        toggleSaveJob(job.id)
+    }
+
     return (
         <Card className="hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
+            <CardContent >
                 <div className="flex items-start justify-between">
                     <div className="flex gap-4">
                         <Avatar className="h-12 w-12 rounded-lg border-none">
-                            <AvatarImage src={job.logo} alt={job.company} className="object-cover" />
+                            <AvatarImage src={job.logo || undefined} alt={job.company} className="object-cover" />
                             <AvatarFallback className="rounded-lg bg-muted text-muted-foreground">
-                                {job.company.substring(0, 2)}
+                                {job.company.substring(0, 2).toUpperCase()}
                             </AvatarFallback>
                         </Avatar>
                         <div>
-                            <h3 className="text-lg font-semibold leading-none mb-1.5">{job.title}</h3>
+                            <h3 className="text-lg font-semibold leading-none mb-1.5">{job.position}</h3>
                             <p className="text-sm text-muted-foreground mb-3">{job.company}</p>
 
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground mb-4">
@@ -44,25 +86,33 @@ export function JobCard({ job }: JobCardProps) {
                                     <MapPin className="h-4 w-4" />
                                     <span>{job.location}</span>
                                 </div>
-                                {job.isRemote && (
+                                {isRemote && (
                                     <Badge variant="secondary" className="font-normal text-muted-foreground bg-muted hover:bg-muted/80">
                                         Remote
                                     </Badge>
                                 )}
                                 <div className="flex items-center gap-1.5">
                                     <DollarSign className="h-4 w-4" />
-                                    <span>{job.salary}</span>
+                                    <span>{formatSalary(job.salaryMin, job.salaryMax, job.salaryCurrency)}</span>
                                 </div>
                                 <div className="flex items-center gap-1.5">
                                     <Briefcase className="h-4 w-4" />
-                                    <span>{job.type}</span>
+                                    <span>{formatEmploymentType(job.employmentType)}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <Button variant="outline" size="icon" className="h-8 w-8 rounded-full">
-                        <Bookmark className="h-4 w-4" />
-                        <span className="sr-only">Save job</span>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        className={cn(
+                            "h-8 w-8 rounded-full transition-colors",
+                            isSaved && "bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
+                        )}
+                        onClick={handleSaveClick}
+                    >
+                        <Bookmark className={cn("h-4 w-4", isSaved && "fill-current")} />
+                        <span className="sr-only">{isSaved ? "Unsave job" : "Save job"}</span>
                     </Button>
                 </div>
 
@@ -71,18 +121,23 @@ export function JobCard({ job }: JobCardProps) {
                 </p>
 
                 <div className="flex flex-wrap gap-2 mb-6">
-                    {job.tags.map((tag) => (
+                    {job.tags.slice(0, 5).map((tag) => (
                         <Badge key={tag} variant="outline" className="rounded-full font-normal">
                             {tag}
                         </Badge>
                     ))}
+                    {job.tags.length > 5 && (
+                        <Badge variant="outline" className="rounded-full font-normal">
+                            +{job.tags.length - 5} more
+                        </Badge>
+                    )}
                 </div>
 
                 <div className="flex items-center justify-between pt-2 border-t">
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1.5">
                             <Clock className="h-4 w-4" />
-                            <span>{job.postedAt}</span>
+                            <span>{formatPostedAt(job.postedAt)}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                             <Users className="h-4 w-4" />
@@ -90,8 +145,12 @@ export function JobCard({ job }: JobCardProps) {
                         </div>
                     </div>
                     <div className="flex gap-2">
-                        <Button variant="outline">View Details</Button>
-                        <Button>Quick Apply</Button>
+                        <Button variant="outline" asChild>
+                            <Link href={`/jobs/${job.id}`}>View Details</Link>
+                        </Button>
+                        <Button asChild>
+                            <Link href={`/jobs/${job.id}#apply`}>Quick Apply</Link>
+                        </Button>
                     </div>
                 </div>
             </CardContent>

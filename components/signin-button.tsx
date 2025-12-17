@@ -7,7 +7,7 @@ export default async function SignInButton() {
     const session = await getSession();
 
     return (
-        session ?
+        (session && session.data?.user.emailVerified) ?
             <Link href="/dashboard" className="w-full">
                 <Button variant="outline" className="w-full">Dashboard</Button>
             </Link>

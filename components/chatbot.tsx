@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { useChat } from '@ai-sdk/react';
-import { Bot, User } from 'lucide-react';
-import { useEffect, useRef, ReactNode, useMemo } from 'react';
+import { Bot, User, Loader2 } from 'lucide-react';
+import { useEffect, useRef, ReactNode, useMemo, useDeferredValue, useCallback, useState, useTransition } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { ApplicationCard } from '@/app/testai/components/ApplicationCard';
@@ -11,12 +11,27 @@ import { JobCard } from '@/app/testai/components/JobCard';
 import { SimpleChatInput } from './simple-chat-input';
 import { ScrollArea } from './ui/scroll-area';
 
-// Memoized component to parse and render message content
-const MessageContent = React.memo(({ text }: { text: string }) => {
+// Pre-compiled regex patterns (moved outside component for performance)
+const APPLICATION_REGEX = /<Application><FullName>(.*?)<\/FullName><Email>(.*?)<\/Email><Phone>(.*?)<\/Phone><JobName>(.*?)<\/JobName><Status>(.*?)<\/Status><Experience>(.*?)<\/Experience><Location>(.*?)<\/Location><AppliedAt>(.*?)<\/AppliedAt><\/Application>/g;
+const JOB_REGEX = /<Job><Position>(.*?)<\/Position><Company>(.*?)<\/Company><Location>(.*?)<\/Location><EmploymentType>(.*?)<\/EmploymentType><WorkMode>(.*?)<\/WorkMode><SalaryMin>(.*?)<\/SalaryMin><SalaryMax>(.*?)<\/SalaryMax><Status>(.*?)<\/Status><Applicants>(.*?)<\/Applicants><PostedAt>(.*?)<\/PostedAt><\/Job>/g;
+
+// Simple streaming text component - lightweight, no parsing
+const StreamingText = React.memo(({ text }: { text: string }) => {
+    return <span className="whitespace-pre-wrap">{text}</span>;
+});
+StreamingText.displayName = 'StreamingText';
+
+// Memoized component to parse and render message content (only used for complete messages)
+const MessageContent = React.memo(({ text, isStreaming = false }: { text: string; isStreaming?: boolean }) => {
+    // During streaming, just show plain text to avoid expensive parsing
+    if (isStreaming) {
+        return <StreamingText text={text} />;
+    }
+
     const parsedContent = useMemo(() => {
-        // Regex patterns for Application and Job cards
-        const applicationRegex = /<Application><FullName>(.*?)<\/FullName><Email>(.*?)<\/Email><Phone>(.*?)<\/Phone><JobName>(.*?)<\/JobName><Status>(.*?)<\/Status><Experience>(.*?)<\/Experience><Location>(.*?)<\/Location><AppliedAt>(.*?)<\/AppliedAt><\/Application>/g;
-        const jobRegex = /<Job><Position>(.*?)<\/Position><Company>(.*?)<\/Company><Location>(.*?)<\/Location><EmploymentType>(.*?)<\/EmploymentType><WorkMode>(.*?)<\/WorkMode><SalaryMin>(.*?)<\/SalaryMin><SalaryMax>(.*?)<\/SalaryMax><Status>(.*?)<\/Status><Applicants>(.*?)<\/Applicants><PostedAt>(.*?)<\/PostedAt><\/Job>/g;
+        // Reset regex indices
+        APPLICATION_REGEX.lastIndex = 0;
+        JOB_REGEX.lastIndex = 0;
 
         const parts: ReactNode[] = [];
         let lastIndex = 0;
@@ -26,10 +41,10 @@ const MessageContent = React.memo(({ text }: { text: string }) => {
         const cardMatches: Array<{ type: 'application' | 'job', index: number, match: RegExpExecArray }> = [];
 
         let match;
-        while ((match = applicationRegex.exec(text)) !== null) {
+        while ((match = APPLICATION_REGEX.exec(text)) !== null) {
             cardMatches.push({ type: 'application', index: match.index, match });
         }
-        while ((match = jobRegex.exec(text)) !== null) {
+        while ((match = JOB_REGEX.exec(text)) !== null) {
             cardMatches.push({ type: 'job', index: match.index, match });
         }
 
@@ -159,15 +174,35 @@ MessageContent.displayName = 'MessageContent';
 export function Chatbot() {
     const { messages, sendMessage, status } = useChat();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
+    const [showScrollButton, setShowScrollButton] = useState(false);
 
     const scrollToBottom = () => {
         if (scrollAreaRef.current) {
-            const viewport = scrollAreaRef.current.querySelector('[data-radix-scroll-area-viewport]');
-            if (viewport) {
-                viewport.scrollTop = viewport.scrollHeight;
-            }
+            scrollAreaRef.current.scrollTo({
+                top: scrollAreaRef.current.scrollHeight,
+                behavior: 'smooth'
+            });
         }
     };
+
+    // Handle scroll to show/hide the scroll-to-bottom button
+    const handleScroll = useCallback(() => {
+        if (scrollAreaRef.current) {
+            const { scrollTop, scrollHeight, clientHeight } = scrollAreaRef.current;
+            // Show button if user scrolled up more than 100px from bottom
+            const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+            setShowScrollButton(!isNearBottom);
+        }
+    }, []);
+
+    // Add scroll event listener
+    useEffect(() => {
+        const scrollElement = scrollAreaRef.current;
+        if (scrollElement) {
+            scrollElement.addEventListener('scroll', handleScroll);
+            return () => scrollElement.removeEventListener('scroll', handleScroll);
+        }
+    }, [handleScroll]);
 
     const handleSendMessage = (message: string) => {
         if (status !== 'streaming' && status !== 'submitted') {
@@ -183,24 +218,41 @@ export function Chatbot() {
     }, [messages]);
 
     return (
-        <div className="flex flex-col h-full">
-            <div className='flex flex-1 flex-col h-full'>
-                <ScrollArea ref={scrollAreaRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-                    {/* Messages Container */}
-                    {messages.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                            <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
-                                <Bot className="w-8 h-8 text-primary" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-foreground mb-1">
-                                Start a Conversation
-                            </h3>
-                            <p className="text-sm text-muted-foreground max-w-xs">
-                                Ask me about jobs, applications, or candidates!
-                            </p>
+        <div className="flex flex-col h-full relative">
+            {/* Scroll to bottom button */}
+            {showScrollButton && (
+                <button
+                    onClick={scrollToBottom}
+                    className="absolute bottom-34 cursor-pointer right-4 z-10 p-2 bg-primary text-primary-foreground rounded-full shadow-lg hover:bg-primary/90 transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
+                    aria-label="Scroll to bottom"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 5v14M5 12l7 7 7-7" />
+                    </svg>
+                </button>
+            )}
+            <div ref={scrollAreaRef} className='flex-1 flex flex-col h-[calc(100vh-4rem)] overflow-y-auto p-4 space-y-4'>
+                {/* Messages Container */}
+                {messages.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                        <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                            <Bot className="w-8 h-8 text-primary" />
                         </div>
-                    ) : (
-                        messages.map((message) => (
+                        <h3 className="text-lg font-semibold text-foreground mb-1">
+                            Start a Conversation
+                        </h3>
+                        <p className="text-sm text-muted-foreground max-w-xs">
+                            Ask me about jobs, applications, or candidates!
+                        </p>
+                    </div>
+                ) : (
+                    messages.map((message, messageIndex) => {
+                        // Determine if this message is currently streaming
+                        const isLastMessage = messageIndex === messages.length - 1;
+                        const isAssistantMessage = message.role === 'assistant';
+                        const isCurrentlyStreaming = isLastMessage && isAssistantMessage && (status === 'streaming' || status === 'submitted');
+
+                        return (
                             <div
                                 key={message.id}
                                 className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
@@ -234,7 +286,7 @@ export function Chatbot() {
                                         <div className="whitespace-pre-wrap break-words">
                                             {message.parts.map((part, index) => {
                                                 if (part.type === 'text') {
-                                                    return <MessageContent key={index} text={part.text} />;
+                                                    return <MessageContent key={index} text={part.text} isStreaming={isCurrentlyStreaming} />;
                                                 }
                                                 return null;
                                             })}
@@ -242,9 +294,9 @@ export function Chatbot() {
                                     </div>
                                 </div>
                             </div>
-                        ))
-                    )}
-                </ScrollArea>
+                        );
+                    })
+                )}
             </div>
             <div className='w-full py-4 px-2'>
                 {/* Input Area - Bottom Right */}

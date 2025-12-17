@@ -1,9 +1,10 @@
 "use client"
 
 import * as React from "react"
-import { Search, SlidersHorizontal, X } from "lucide-react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { SlidersHorizontal, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { SearchSuggestions } from "@/components/search-suggestions"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -11,48 +12,145 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 
-export function JobsFilter() {
+const EMPLOYMENT_TYPES = [
+    { value: "", label: "All Types" },
+    { value: "full-time", label: "Full-time" },
+    { value: "part-time", label: "Part-time" },
+    { value: "contract", label: "Contract" },
+]
+
+const WORK_MODES = [
+    { value: "", label: "All Work Modes" },
+    { value: "onsite", label: "On-site" },
+    { value: "hybrid", label: "Hybrid" },
+    { value: "remote", label: "Remote" },
+]
+
+interface JobsFilterProps {
+    onSearch?: (params: URLSearchParams) => void
+}
+
+export function JobsFilter({ onSearch }: JobsFilterProps) {
+    const router = useRouter()
+    const searchParams = useSearchParams()
+
+    const [search, setSearch] = React.useState(searchParams.get("search") || "")
+    const [employmentType, setEmploymentType] = React.useState(searchParams.get("employmentType") || "")
+    const [workMode, setWorkMode] = React.useState(searchParams.get("workMode") || "")
+    const [showFilters, setShowFilters] = React.useState(true)
+
+    const updateFilters = React.useCallback((newParams: Record<string, string>) => {
+        const params = new URLSearchParams(searchParams.toString())
+
+        Object.entries(newParams).forEach(([key, value]) => {
+            if (value) {
+                params.set(key, value)
+            } else {
+                params.delete(key)
+            }
+        })
+
+        // Reset to page 1 when filters change
+        params.delete("page")
+
+        router.push(`/jobs?${params.toString()}`)
+        onSearch?.(params)
+    }, [router, searchParams, onSearch])
+
+    const handleSearch = (value: string) => {
+        setSearch(value)
+        updateFilters({ search: value })
+    }
+
+    const handleReset = () => {
+        setSearch("")
+        setEmploymentType("")
+        setWorkMode("")
+        router.push("/jobs")
+        onSearch?.(new URLSearchParams())
+    }
+
+    const hasActiveFilters = search || employmentType || workMode
+
     return (
         <div className="space-y-4 mb-8">
-            <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search jobs by title, department, or company..."
-                        className="pl-9 h-10 bg-background/50"
-                    />
-                </div>
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+                <SearchSuggestions
+                    placeholder="Search jobs by title, company, or skills..."
+                    className="flex-1"
+                    inputClassName="h-10 bg-background/50"
+                    value={search}
+                    onChange={setSearch}
+                    onSearch={handleSearch}
+                    navigateOnSelect={false}
+                />
                 <div className="flex gap-2">
-                    <Button variant="outline" className="gap-2 h-10">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        className="gap-2 h-10"
+                        onClick={() => setShowFilters(!showFilters)}
+                    >
                         <SlidersHorizontal className="h-4 w-4" />
-                        Hide Filters
+                        {showFilters ? "Hide Filters" : "Show Filters"}
                     </Button>
-                    <Button variant="ghost" className="h-10 text-muted-foreground hover:text-foreground">
-                        Reset Filters
-                    </Button>
+                    {hasActiveFilters && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            className="h-10 text-muted-foreground hover:text-foreground gap-2"
+                            onClick={handleReset}
+                        >
+                            <X className="h-4 w-4" />
+                            Reset
+                        </Button>
+                    )}
                 </div>
             </div>
 
             {/* Filter Dropdowns Row */}
-            <div className="flex flex-wrap gap-3">
-                <FilterDropdown label="All Departments" />
-                <FilterDropdown label="All Locations" />
-                <FilterDropdown label="All Types" />
-                <FilterDropdown label="All Types" /> {/* Assuming 'All Types' duplicated in image or implies diff cat */}
-                <FilterDropdown label="All Levels" />
-            </div>
+            {showFilters && (
+                <div className="flex flex-wrap gap-3">
+                    <FilterDropdown
+                        label={EMPLOYMENT_TYPES.find(t => t.value === employmentType)?.label || "All Types"}
+                        options={EMPLOYMENT_TYPES}
+                        value={employmentType}
+                        onChange={(value) => {
+                            setEmploymentType(value)
+                            updateFilters({ employmentType: value })
+                        }}
+                    />
+                    <FilterDropdown
+                        label={WORK_MODES.find(m => m.value === workMode)?.label || "All Work Modes"}
+                        options={WORK_MODES}
+                        value={workMode}
+                        onChange={(value) => {
+                            setWorkMode(value)
+                            updateFilters({ workMode: value })
+                        }}
+                    />
+                </div>
+            )}
         </div>
     )
 }
 
-function FilterDropdown({ label }: { label: string }) {
+interface FilterDropdownProps {
+    label: string
+    options: { value: string; label: string }[]
+    value: string
+    onChange: (value: string) => void
+}
+
+function FilterDropdown({ label, options, value, onChange }: FilterDropdownProps) {
     return (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="justify-between gap-2 min-w-[140px] font-normal">
+                <Button
+                    variant="outline"
+                    className={`justify-between gap-2 min-w-[140px] font-normal ${value ? "border-primary text-primary" : ""}`}
+                >
                     {label}
-                    {/* Chevron down could go here, or handled by styling */}
-                    <span className="sr-only">Open menu</span>
                     <svg
                         width="10"
                         height="6"
@@ -72,9 +170,15 @@ function FilterDropdown({ label }: { label: string }) {
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuItem>Option 1</DropdownMenuItem>
-                <DropdownMenuItem>Option 2</DropdownMenuItem>
-                <DropdownMenuItem>Option 3</DropdownMenuItem>
+                {options.map((option) => (
+                    <DropdownMenuItem
+                        key={option.value}
+                        onClick={() => onChange(option.value)}
+                        className={value === option.value ? "bg-accent" : ""}
+                    >
+                        {option.label}
+                    </DropdownMenuItem>
+                ))}
             </DropdownMenuContent>
         </DropdownMenu>
     )

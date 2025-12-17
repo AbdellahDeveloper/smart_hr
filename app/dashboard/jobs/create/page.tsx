@@ -15,9 +15,10 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import { createJob } from "@/lib/actions/jobs"
+import { useSession } from "@/lib/auth-client"
 
-type Job = {
-    id: string
+type JobFormData = {
     position: string
     company: string
     logo: string
@@ -26,19 +27,19 @@ type Job = {
     workMode: "onsite" | "hybrid" | "remote"
     salaryMin: number
     salaryMax: number
-    salaryCurrency?: string
+    salaryCurrency: string
     status: "open" | "closed"
     description: string
     tags: string[]
-    postedAt: string
-    applicants: number
 }
 
 export default function JobCreatePage() {
     const router = useRouter()
+    const { data: session } = useSession()
+    const [isLoading, setIsLoading] = React.useState(false)
 
     // Form state with default values
-    const [formData, setFormData] = React.useState<Omit<Job, "id" | "postedAt" | "applicants">>({
+    const [formData, setFormData] = React.useState<JobFormData>({
         position: "",
         company: "",
         logo: "",
@@ -55,7 +56,7 @@ export default function JobCreatePage() {
     const [tagsInput, setTagsInput] = React.useState("")
     const [currency, setCurrency] = React.useState("USD")
 
-    const handleInputChange = (field: keyof typeof formData, value: any) => {
+    const handleInputChange = (field: keyof JobFormData, value: string | number | string[]) => {
         setFormData((prev) => ({ ...prev, [field]: value }))
     }
 
@@ -65,7 +66,7 @@ export default function JobCreatePage() {
         handleInputChange("tags", tagsArray)
     }
 
-    const handleCreate = () => {
+    const handleCreate = async () => {
         // Validation
         if (!formData.position.trim()) {
             toast.error("Please enter a job position")
@@ -87,13 +88,24 @@ export default function JobCreatePage() {
             toast.error("Maximum salary must be greater than minimum salary")
             return
         }
+        if (!session?.user?.id) {
+            toast.error("You must be logged in to create a job")
+            return
+        }
 
-        // Here you would typically send the data to your backend
-        toast.success("Job created successfully!")
-        console.log("Created job data:", formData)
-
-        // Navigate back to jobs page
-        router.push("/dashboard/jobs")
+        setIsLoading(true)
+        try {
+            await createJob({
+                ...formData,
+                userId: session.user.id,
+            })
+            toast.success("Job created successfully!")
+            router.push("/dashboard/jobs")
+        } catch (error) {
+            toast.error("Failed to create job")
+        } finally {
+            setIsLoading(false)
+        }
     }
 
     const handleCancel = () => {

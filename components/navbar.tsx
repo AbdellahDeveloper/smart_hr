@@ -4,8 +4,7 @@ import { Logo } from "@/components/logo";
 import { cn } from "@/lib/utils";
 import { MobileNav } from "@/components/mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { SearchSuggestions } from "@/components/search-suggestions";
 import { usePathname } from "next/navigation";
 
 export function Header({ children }: { children: React.ReactNode }) {
@@ -37,14 +36,12 @@ export function Header({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <div className="hidden flex-1 items-center justify-center md:flex px-4">
-                    <div className="relative w-full max-w-sm">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="Search jobs..."
-                            className="w-full rounded-full bg-muted pl-9 h-9"
-                        />
-                    </div>
+                    <SearchSuggestions
+                        placeholder="Search jobs..."
+                        className="w-full max-w-sm"
+                        inputClassName="bg-muted"
+                        navigateOnSelect={true}
+                    />
                 </div>
 
                 <div className="flex items-center gap-2">

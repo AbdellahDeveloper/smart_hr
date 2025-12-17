@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { SignOutButton } from "@/components/signout-button";
+import { getDashboardStats } from "@/lib/actions/dashboard";
+import { DashboardContent } from "./_components/dashboard-content";
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({
@@ -12,11 +13,7 @@ export default async function DashboardPage() {
     redirect("/auth");
   }
 
-  return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-24">
-      <h1 className="text-4xl font-bold mb-4">Dashboard</h1>
-      <p className="text-xl mb-8">Welcome, {session.user.name}!</p>
-      <SignOutButton />
-    </div>
-  );
+  const stats = await getDashboardStats(session.user.id);
+
+  return <DashboardContent stats={stats} />;
 }

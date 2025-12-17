@@ -1,38 +1,68 @@
 "use client"
 
+import * as React from "react"
 import { useParams, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Mail, Phone, MapPin, Calendar, FileText, Briefcase, User, UserCircle2 } from "lucide-react"
 import { toast } from "sonner"
-import applicationsData from "../applications-data.json"
+import { getApplicationById, updateApplicationStatus } from "@/lib/actions/applications"
 
 type Application = {
     id: string
     fullName: string
-    gender: "male" | "female"
+    gender: string
     email: string
     phone: string
     jobId: string
     jobName: string
-    cvUrl: string
-    coverLetter: string
-    status: "pending" | "accepted" | "rejected"
-    appliedAt: string
-    experience: string
-    location: string
+    cvUrl: string | null
+    coverLetter: string | null
+    status: string
+    appliedAt: Date
+    experience: string | null
+    location: string | null
 }
-
-const data: Application[] = applicationsData as Application[]
 
 export default function ApplicationDetailPage() {
     const params = useParams()
     const router = useRouter()
     const applicationId = params.application_id as string
 
-    // Find the application by ID
-    const application = data.find(app => app.id === applicationId)
+    const [application, setApplication] = React.useState<Application | null>(null)
+    const [isLoading, setIsLoading] = React.useState(true)
+    const [isUpdating, setIsUpdating] = React.useState(false)
+
+    // Fetch application data
+    React.useEffect(() => {
+        async function fetchApplication() {
+            try {
+                const data = await getApplicationById(applicationId)
+                setApplication(data)
+            } catch (error) {
+                toast.error("Failed to load application")
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchApplication()
+    }, [applicationId])
+
+    if (isLoading) {
+        return (
+            <div className="w-full p-6">
+                <div className="flex items-center gap-4 mb-6">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
+                    <div>
+                        <p className="text-muted-foreground">Loading application...</p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
     if (!application) {
         return (
@@ -50,17 +80,33 @@ export default function ApplicationDetailPage() {
         )
     }
 
-    const handleAccept = () => {
-        toast.success(`Application from ${application.fullName} accepted`)
-        router.push("/dashboard/applications")
+    const handleAccept = async () => {
+        setIsUpdating(true)
+        try {
+            await updateApplicationStatus(application.id, "accepted")
+            toast.success(`Application from ${application.fullName} accepted`)
+            router.push("/dashboard/applications")
+        } catch (error) {
+            toast.error("Failed to accept application")
+        } finally {
+            setIsUpdating(false)
+        }
     }
 
-    const handleReject = () => {
-        toast.error(`Application from ${application.fullName} rejected`)
-        router.push("/dashboard/applications")
+    const handleReject = async () => {
+        setIsUpdating(true)
+        try {
+            await updateApplicationStatus(application.id, "rejected")
+            toast.error(`Application from ${application.fullName} rejected`)
+            router.push("/dashboard/applications")
+        } catch (error) {
+            toast.error("Failed to reject application")
+        } finally {
+            setIsUpdating(false)
+        }
     }
 
-    const formatDate = (dateString: string) => {
+    const formatDate = (dateString: Date) => {
         const date = new Date(dateString)
         return date.toLocaleDateString("en-US", {
             year: "numeric",

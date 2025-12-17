@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Sun, Moon, Search } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Input } from "@/components/ui/input";
+import { SearchSuggestions } from "./search-suggestions";
 
 export function MobileNav({ children }: { children: React.ReactNode }) {
     const { setTheme, theme } = useTheme();
@@ -44,11 +45,11 @@ export function MobileNav({ children }: { children: React.ReactNode }) {
             {isOpen && (
                 <div className="absolute top-14 left-0 w-full bg-background border-b shadow-lg p-4 flex flex-col gap-6 animate-in slide-in-from-top-5 duration-200">
                     <div className="relative w-full">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
+                        <SearchSuggestions
                             placeholder="Search jobs..."
-                            className="w-full rounded-full bg-muted pl-9 h-9"
+                            className="w-full max-w-sm bg-muted"
+                            inputClassName="w-full rounded-full h-9"
+                            navigateOnSelect={true}
                         />
                     </div>
 

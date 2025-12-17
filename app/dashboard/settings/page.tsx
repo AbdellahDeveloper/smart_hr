@@ -6,75 +6,157 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera } from "lucide-react"
-
-type UserSettings = {
-    companyName: string
-    firstName: string
-    lastName: string
-    profilePicture: string
-}
+import { getSettings, updateSettings, type UserSettings } from "@/lib/actions/settings"
+import { uploadProfilePicture } from "@/lib/actions/upload"
+import { useSession } from "@/lib/auth-client"
 
 export default function SettingsPage() {
-    // Form state
-    const [formData, setFormData] = React.useState<UserSettings>({
-        companyName: "Acme Corp",
-        firstName: "John",
-        lastName: "Doe",
-        profilePicture: ""
+    const { data: session } = useSession()
+    const [isLoading, setIsLoading] = React.useState(true)
+    const [isSaving, setIsSaving] = React.useState(false)
+    const [originalSettings, setOriginalSettings] = React.useState<UserSettings | null>(null)
+    const [pendingFile, setPendingFile] = React.useState<File | null>(null)
+    const [previewUrl, setPreviewUrl] = React.useState<string>("")
+    const [settings, setSettings] = React.useState<UserSettings>({
+        companyName: "",
+        firstName: "",
+        lastName: "",
+        profilePicture: "",
     })
 
-    const [originalData, setOriginalData] = React.useState<UserSettings>({
-        companyName: "Acme Corp",
-        firstName: "John",
-        lastName: "Doe",
-        profilePicture: ""
-    })
+    // Fetch settings
+    React.useEffect(() => {
+        async function fetchSettings() {
+            if (!session?.user?.id) return
 
-    const fileInputRef = React.useRef<HTMLInputElement>(null)
+            try {
+                const data = await getSettings(session.user.id)
+                if (data) {
+                    const settingsData: UserSettings = {
+                        companyName: data.companyName || "",
+                        firstName: data.firstName || "",
+                        lastName: data.lastName || "",
+                        profilePicture: data.profilePicture || "",
+                    }
+                    setSettings(settingsData)
+                    setOriginalSettings(settingsData)
+                }
+            } catch (error) {
+                toast.error("Failed to load settings")
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchSettings()
+    }, [session?.user?.id])
 
     const handleInputChange = (field: keyof UserSettings, value: string) => {
-        setFormData((prev) => ({ ...prev, [field]: value }))
+        setSettings((prev) => ({ ...prev, [field]: value }))
     }
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (file) {
-            // Check file size (max 5MB)
+            // Validate file type
+            const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/svg+xml"]
+            if (!allowedTypes.includes(file.type)) {
+                toast.error("Only PNG, JPG, JPEG, and SVG images are allowed")
+                return
+            }
+
+            // Validate file size (max 5MB)
             if (file.size > 5 * 1024 * 1024) {
-                toast.error("Image file size must be less than 5MB")
+                toast.error("Image size must be less than 5MB")
                 return
             }
 
-            // Check file type
-            if (!file.type.startsWith('image/')) {
-                toast.error("Please upload an image file")
-                return
-            }
+            // Store the file for upload on save
+            setPendingFile(file)
 
+            // Create a preview URL for instant feedback
             const reader = new FileReader()
             reader.onloadend = () => {
-                const result = reader.result as string
-                setFormData((prev) => ({ ...prev, profilePicture: result }))
-                toast.success("Profile picture updated")
+                setPreviewUrl(reader.result as string)
             }
             reader.readAsDataURL(file)
         }
     }
 
-    const handleSave = () => {
-        // Here you would typically send the data to your backend
-        setOriginalData(formData)
-        toast.success("Settings saved successfully!")
-        console.log("Saved data:", formData)
+    const handleSave = async () => {
+        if (!session?.user?.id) {
+            toast.error("You must be logged in to save settings")
+            return
+        }
+
+        setIsSaving(true)
+        try {
+            let profilePictureUrl = settings.profilePicture
+
+            // Upload new profile picture to S3 if there's a pending file
+            if (pendingFile) {
+                const formData = new FormData()
+                formData.append("file", pendingFile)
+
+                const uploadResult = await uploadProfilePicture(formData, session.user.id)
+
+                if (!uploadResult.success) {
+                    toast.error(uploadResult.error || "Failed to upload image")
+                    setIsSaving(false)
+                    return
+                }
+
+                profilePictureUrl = uploadResult.url || null
+            }
+
+            await updateSettings(session.user.id, {
+                companyName: settings.companyName || undefined,
+                firstName: settings.firstName || undefined,
+                lastName: settings.lastName || undefined,
+                profilePicture: profilePictureUrl || undefined,
+            })
+
+            // Update local state with new URL
+            const updatedSettings = { ...settings, profilePicture: profilePictureUrl }
+            setSettings(updatedSettings)
+            setOriginalSettings(updatedSettings)
+            setPendingFile(null)
+            setPreviewUrl("")
+            toast.success("Settings saved successfully!")
+        } catch (error) {
+            toast.error("Failed to save settings")
+        } finally {
+            setIsSaving(false)
+        }
     }
 
     const handleCancel = () => {
-        setFormData(originalData)
+        if (originalSettings) {
+            setSettings(originalSettings)
+        }
+        setPendingFile(null)
+        setPreviewUrl("")
         toast.info("Changes discarded")
     }
 
     const getInitials = () => {
-        return `${formData.firstName.charAt(0)}${formData.lastName.charAt(0)}`.toUpperCase()
+        const first = settings.firstName?.[0] || ""
+        const last = settings.lastName?.[0] || ""
+        return (first + last).toUpperCase() || "U"
+    }
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen pb-12">
+                <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b">
+                    <div className="max-w-5xl mx-auto px-6 py-4">
+                        <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
+                        <p className="text-sm text-muted-foreground mt-1">
+                            Loading settings...
+                        </p>
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -85,15 +167,15 @@ export default function SettingsPage() {
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">Settings</h1>
                         <p className="text-sm text-muted-foreground mt-1">
-                            Update your profile and company information
+                            Manage your profile and preferences
                         </p>
                     </div>
                     <div className="flex gap-3">
-                        <Button variant="outline" onClick={handleCancel}>
+                        <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
                             Cancel
                         </Button>
-                        <Button onClick={handleSave}>
-                            Save Changes
+                        <Button onClick={handleSave} disabled={isSaving}>
+                            {isSaving ? "Saving..." : "Save Changes"}
                         </Button>
                     </div>
                 </div>
@@ -107,46 +189,32 @@ export default function SettingsPage() {
                         <div className="space-y-1">
                             <h3 className="text-base font-semibold">Profile Picture</h3>
                             <p className="text-sm text-muted-foreground">
-                                Update your profile photo
+                                Your profile photo
                             </p>
                         </div>
-                        <div className="space-y-2">
-                            <div className="flex items-center gap-4">
-                                <div className="relative group">
-                                    <Avatar className="h-20 w-20">
-                                        <AvatarImage src={formData.profilePicture} alt="Profile" />
-                                        <AvatarFallback className="text-lg">
-                                            {getInitials()}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                    <button
-                                        type="button"
-                                        onClick={() => fileInputRef.current?.click()}
-                                        className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                                    >
-                                        <Camera className="h-6 w-6 text-white" />
-                                    </button>
-                                </div>
-                                <div className="flex-1">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => fileInputRef.current?.click()}
-                                    >
-                                        Upload Photo
-                                    </Button>
-                                    <input
-                                        ref={fileInputRef}
-                                        type="file"
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={handleImageUpload}
-                                    />
-                                </div>
+                        <div className="flex items-center gap-4">
+                            <div className="relative group">
+                                <Avatar className="h-20 w-20">
+                                    <AvatarImage src={previewUrl || settings.profilePicture || ""} alt="Profile" />
+                                    <AvatarFallback className="text-xl">{getInitials()}</AvatarFallback>
+                                </Avatar>
+                                <label
+                                    htmlFor="avatar-upload"
+                                    className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 cursor-pointer rounded-full transition-opacity"
+                                >
+                                    <Camera className="h-6 w-6 text-white" />
+                                </label>
+                                <input
+                                    id="avatar-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={handleImageUpload}
+                                />
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                                Click on the avatar or button to upload a new photo (max 5MB)
-                            </p>
+                            <div className="text-sm text-muted-foreground">
+                                Click on the avatar to upload a new photo
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -157,17 +225,17 @@ export default function SettingsPage() {
                         <div className="space-y-1">
                             <h3 className="text-base font-semibold">Company Name</h3>
                             <p className="text-sm text-muted-foreground">
-                                The name of your company or organization
+                                Your company or organization name
                             </p>
                         </div>
                         <div className="space-y-2">
                             <Input
-                                value={formData.companyName}
+                                value={settings.companyName || ""}
                                 onChange={(e) => handleInputChange("companyName", e.target.value)}
                                 placeholder="e.g., Acme Corporation"
                             />
                             <p className="text-xs text-muted-foreground">
-                                Enter your company's official name
+                                This will be displayed on your job postings
                             </p>
                         </div>
                     </div>
@@ -179,18 +247,15 @@ export default function SettingsPage() {
                         <div className="space-y-1">
                             <h3 className="text-base font-semibold">First Name</h3>
                             <p className="text-sm text-muted-foreground">
-                                Your given name
+                                Your first name
                             </p>
                         </div>
                         <div className="space-y-2">
                             <Input
-                                value={formData.firstName}
+                                value={settings.firstName || ""}
                                 onChange={(e) => handleInputChange("firstName", e.target.value)}
                                 placeholder="e.g., John"
                             />
-                            <p className="text-xs text-muted-foreground">
-                                Enter your first name
-                            </p>
                         </div>
                     </div>
                 </div>
@@ -201,18 +266,15 @@ export default function SettingsPage() {
                         <div className="space-y-1">
                             <h3 className="text-base font-semibold">Last Name</h3>
                             <p className="text-sm text-muted-foreground">
-                                Your family name
+                                Your last name
                             </p>
                         </div>
                         <div className="space-y-2">
                             <Input
-                                value={formData.lastName}
+                                value={settings.lastName || ""}
                                 onChange={(e) => handleInputChange("lastName", e.target.value)}
                                 placeholder="e.g., Doe"
                             />
-                            <p className="text-xs text-muted-foreground">
-                                Enter your last name
-                            </p>
                         </div>
                     </div>
                 </div>

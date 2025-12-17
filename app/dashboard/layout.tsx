@@ -1,60 +1,35 @@
-"use client"
+import { AppRightSidebar } from "@/components/app-right-sidebar"
+import { headers } from "next/headers"
+import { redirect } from "next/navigation"
+import { auth } from "@/lib/auth"
+import { resendOtp } from "../actions/auth"
+import { getUserProfile } from "@/lib/actions/settings"
+import DashboardLayoutContent from "./_components/dashboard-layout-content"
 
-import {
-    SidebarInset,
-    SidebarProvider,
-} from "@/components/ui/sidebar"
-import { SiteHeader } from "@/app/dashboard/_components/site-header"
-import { AppSidebar } from "@/components/app-sidebar"
-import { AppRightSidebar, useRightSidebar } from "@/components/app-right-sidebar"
-import { RightSidebar } from "@/components/right-sidebar"
-import {
-    ResizableHandle,
-    ResizablePanel,
-    ResizablePanelGroup,
-} from "@/components/ui/resizable"
-
-function DashboardLayoutContent({
+export default async function DashboardLayout({
     children,
 }: {
     children: React.ReactNode
 }) {
-    const { open } = useRightSidebar()
-    return (
-        <SidebarProvider>
-            <AppSidebar variant="inset" />
-            <ResizablePanelGroup direction="horizontal" className="flex-1">
-                <ResizablePanel defaultSize={open ? 75 : 100} minSize={30}>
-                    <SidebarInset>
-                        <SiteHeader />
-                        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-                            {children}
-                        </div>
-                    </SidebarInset>
-                </ResizablePanel>
-                {open && (
-                    <>
-                        <ResizableHandle className=" h-screen" />
-                        <ResizablePanel defaultSize={25} minSize={15} maxSize={50}>
-                            <RightSidebar variant="inset" />
-                        </ResizablePanel>
-                    </>
-                )}
-            </ResizablePanelGroup>
-        </SidebarProvider>
-    )
-}
+    const session = await auth.api.getSession({
+        headers: await headers(),
+    });
+    if (!session) {
+        redirect("/auth");
+    }
+    if (!session.user.emailVerified) {
+        await resendOtp(session.user.email);
+        redirect(`/auth/verify-email?email=${encodeURIComponent(session.user.email)}`);
+    }
 
-export default function DashboardLayout({
-    children,
-}: {
-    children: React.ReactNode
-}) {
+    const userProfile = await getUserProfile(session.user.id);
+
     return (
         <AppRightSidebar>
-            <DashboardLayoutContent>
+            <DashboardLayoutContent userProfile={userProfile}>
                 {children}
             </DashboardLayoutContent>
         </AppRightSidebar>
     )
 }
+
