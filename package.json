@@ -48,6 +48,7 @@
     "@zxcvbn-ts/language-en": "^3.0.2",
     "ai": "^5.0.113",
     "better-auth": "^1.4.5",
+    "canvas": "^3.2.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
