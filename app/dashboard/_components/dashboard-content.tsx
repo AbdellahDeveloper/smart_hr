@@ -1,7 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid } from "recharts"
+import Link from "next/link"
+import { Bar, BarChart, Pie, PieChart, Cell, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Area, AreaChart } from "recharts"
 import {
     Briefcase,
     Users,
@@ -9,8 +10,13 @@ import {
     CheckCircle,
     XCircle,
     TrendingUp,
+    ArrowUpRight,
+    ArrowRight,
+    Sparkles,
 } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { ChartContainer, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart"
 import type { DashboardStats } from "@/lib/actions/dashboard"
 
@@ -21,7 +27,7 @@ interface DashboardContentProps {
 const applicationChartConfig = {
     count: {
         label: "Applications",
-        color: "hsl(var(--chart-1))",
+        color: "hsl(var(--primary))",
     },
 } satisfies ChartConfig
 
@@ -38,203 +44,296 @@ const statusChartConfig = {
 } satisfies ChartConfig
 
 export function DashboardContent({ stats }: DashboardContentProps) {
+    const acceptanceRate = stats.totalApplications > 0
+        ? Math.round((stats.acceptedApplications / stats.totalApplications) * 100)
+        : 0
+
     return (
         <div className="min-h-screen pb-12">
-            {/* Header */}
-            <div className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b">
-                <div className="max-w-7xl mx-auto px-6 py-4">
-                    <h1 className="text-2xl font-bold tracking-tight">Dashboard</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Welcome back! Here&apos;s your HR overview.
-                    </p>
+            {/* Hero Header */}
+            <div className="relative overflow-hidden border-b">
+                <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+                <div className="max-w-7xl mx-auto px-6 py-8">
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-2">
+                            <div className="flex items-center gap-2">
+                                <Sparkles className="h-5 w-5 text-primary" />
+                                <Badge variant="secondary" className="text-xs">Overview</Badge>
+                            </div>
+                            <h1 className="text-3xl font-bold tracking-tight">Welcome back!</h1>
+                            <p className="text-muted-foreground max-w-lg">
+                                Here's what's happening with your recruitment pipeline today.
+                            </p>
+                        </div>
+                        <div className="hidden md:flex gap-3">
+                            <Button variant="outline">
+                                <Link href="/dashboard/jobs">View Jobs</Link>
+                            </Button>
+                            <Button>
+                                <Link href="/dashboard/jobs/create">
+                                    Post New Job
+                                    <ArrowRight className="ml-2 h-4 w-4" />
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             {/* Dashboard Content */}
             <div className="max-w-7xl mx-auto px-6 py-8 space-y-8">
-                {/* Stats Cards */}
+                {/* Main Stats Grid */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 border-blue-500/20">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Total Jobs
-                            </CardTitle>
-                            <Briefcase className="h-4 w-4 text-blue-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.totalJobs}</div>
-                            <p className="text-xs text-muted-foreground">
-                                {stats.openJobs} open, {stats.closedJobs} closed
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-600/5 border-emerald-500/20">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Total Applications
-                            </CardTitle>
-                            <Users className="h-4 w-4 text-emerald-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.totalApplications}</div>
-                            <p className="text-xs text-muted-foreground">
-                                From all job postings
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Pending Review
-                            </CardTitle>
-                            <Clock className="h-4 w-4 text-amber-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">{stats.pendingApplications}</div>
-                            <p className="text-xs text-muted-foreground">
-                                Awaiting decision
-                            </p>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5 border-green-500/20">
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium text-muted-foreground">
-                                Acceptance Rate
-                            </CardTitle>
-                            <TrendingUp className="h-4 w-4 text-green-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold">
-                                {stats.totalApplications > 0
-                                    ? Math.round((stats.acceptedApplications / stats.totalApplications) * 100)
-                                    : 0}%
+                    {/* Total Jobs */}
+                    <Card className="shadow-none gap-0! group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-blue-500/20 to-transparent rounded-bl-full" />
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                    Total Jobs
+                                </CardTitle>
+                                <div className="p-2 rounded-lg bg-blue-500/10">
+                                    <Briefcase className="h-4 w-4 text-blue-500" />
+                                </div>
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                                {stats.acceptedApplications} accepted
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-4xl font-bold">{stats.totalJobs}</div>
+                            <div className="flex items-center gap-2 mt-2">
+                                <Badge variant="secondary" className="text-xs">
+                                    {stats.openJobs} open
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                    {stats.closedJobs} closed
+                                </span>
+                            </div>
+                        </CardContent>
+                        <Link href="/dashboard/jobs" className="absolute inset-0" />
+                    </Card>
+
+                    {/* Total Applications */}
+                    <Card className="shadow-none gap-0! group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-bl-full" />
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                    Applications
+                                </CardTitle>
+                                <div className="p-2 rounded-lg bg-emerald-500/10">
+                                    <Users className="h-4 w-4 text-emerald-500" />
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-4xl font-bold">{stats.totalApplications}</div>
+                            <p className="text-xs text-muted-foreground mt-2">
+                                Across all job postings
                             </p>
+                        </CardContent>
+                        <Link href="/dashboard/applications" className="absolute inset-0" />
+                    </Card>
+
+                    {/* Pending Review */}
+                    <Card className="shadow-none gap-0! group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/20 to-transparent rounded-bl-full" />
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                    Pending Review
+                                </CardTitle>
+                                <div className="p-2 rounded-lg bg-amber-500/10">
+                                    <Clock className="h-4 w-4 text-amber-500" />
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-4xl font-bold">{stats.pendingApplications}</div>
+                            <p className="text-xs text-muted-foreground mt-2">
+                                Awaiting your decision
+                            </p>
+                        </CardContent>
+                        <Link href="/dashboard/applications?status=pending" className="absolute inset-0" />
+                    </Card>
+
+                    {/* Acceptance Rate */}
+                    <Card className="shadow-none gap-0! group relative overflow-hidden border-2 hover:border-primary/50 transition-all duration-300">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-green-500/20 to-transparent rounded-bl-full" />
+                        <CardHeader>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-sm font-medium text-muted-foreground">
+                                    Acceptance Rate
+                                </CardTitle>
+                                <div className="p-2 rounded-lg bg-green-500/10">
+                                    <TrendingUp className="h-4 w-4 text-green-500" />
+                                </div>
+                            </div>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-4xl font-bold">{acceptanceRate}%</div>
+                            <div className="flex items-center gap-1 mt-2">
+                                <ArrowUpRight className="h-3 w-3 text-green-500" />
+                                <span className="text-xs text-green-600 font-medium">
+                                    {stats.acceptedApplications} accepted
+                                </span>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Quick Actions Row */}
+                <div className="grid gap-4 md:grid-cols-3">
+                    <Card className="shadow-none gap-2! border-green-500/20">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                            <CardTitle className="text-xs font-medium text-muted-foreground">Accepted</CardTitle>
+                            <CheckCircle className="h-5 w-5" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-4xl font-bold">{stats.acceptedApplications}</div>
+                            <p className="text-sm text-muted-foreground mt-1">candidates hired</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="shadow-none gap-2! border-amber-500/20">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                            <CardTitle className="text-xs font-medium text-muted-foreground">Pending</CardTitle>
+                            <Clock className="h-5 w-5" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-4xl font-bold">{stats.pendingApplications}</div>
+                            <p className="text-sm text-muted-foreground mt-1">awaiting review</p>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="shadow-none gap-2! border-red-500/20">
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                            <CardTitle className="text-xs font-medium text-muted-foreground">Rejected</CardTitle>
+                            <XCircle className="h-5 w-5" />
+                        </CardHeader>
+                        <CardContent>
+                            <div className="text-4xl font-bold">{stats.rejectedApplications}</div>
+                            <p className="text-sm text-muted-foreground mt-1">not selected</p>
                         </CardContent>
                     </Card>
                 </div>
 
                 {/* Charts Section */}
-                <div className="grid gap-6 md:grid-cols-2">
-                    {/* Applications Trend */}
-                    <Card>
+                <div className="grid gap-6 lg:grid-cols-7">
+                    {/* Applications Trend - Takes 4 columns */}
+                    <Card className="shadow-none lg:col-span-4 gap-2!">
                         <CardHeader>
-                            <CardTitle>Applications Trend</CardTitle>
-                            <CardDescription>
-                                Number of applications received over the last 6 months
-                            </CardDescription>
+                            <div className="flex items-center justify-between">
+                                <div>
+                                    <CardTitle>Applications Trend</CardTitle>
+                                    <CardDescription>
+                                        Application volume over the last 6 months
+                                    </CardDescription>
+                                </div>
+                                <Button variant="ghost" size="sm" asChild>
+                                    <Link href="/dashboard/applications">
+                                        View all
+                                        <ArrowRight className="ml-1 h-3 w-3" />
+                                    </Link>
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             {stats.recentApplications.some(a => a.count > 0) ? (
-                                <ChartContainer config={applicationChartConfig} className="h-[250px]">
-                                    <BarChart data={stats.recentApplications} margin={{ left: 0, right: 0 }}>
-                                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                                <ChartContainer config={applicationChartConfig} className="h-[280px] w-full">
+                                    <AreaChart data={stats.recentApplications} margin={{ left: 0, right: 0, top: 10, bottom: 0 }}>
+                                        <defs>
+                                            <linearGradient id="fillCount" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid vertical={false} strokeDasharray="3 3" className="stroke-muted" />
                                         <XAxis
                                             dataKey="month"
                                             tickLine={false}
                                             axisLine={false}
                                             tickMargin={8}
+                                            className="text-xs"
                                         />
                                         <YAxis
                                             tickLine={false}
                                             axisLine={false}
                                             tickMargin={8}
                                             allowDecimals={false}
+                                            className="text-xs"
                                         />
                                         <ChartTooltip content={<ChartTooltipContent />} />
-                                        <Bar
+                                        <Area
+                                            type="monotone"
                                             dataKey="count"
-                                            fill="var(--color-count)"
-                                            radius={[4, 4, 0, 0]}
+                                            stroke="hsl(var(--primary))"
+                                            strokeWidth={2}
+                                            fill="url(#fillCount)"
                                         />
-                                    </BarChart>
+                                    </AreaChart>
                                 </ChartContainer>
                             ) : (
-                                <div className="h-[250px] flex items-center justify-center text-muted-foreground">
-                                    No application data yet
+                                <div className="h-[280px] flex flex-col items-center justify-center text-muted-foreground">
+                                    <Users className="h-12 w-12 mb-4 opacity-20" />
+                                    <p>No application data yet</p>
+                                    <p className="text-sm">Applications will appear here</p>
                                 </div>
                             )}
                         </CardContent>
                     </Card>
 
-                    {/* Application Status Distribution */}
-                    <Card>
+                    {/* Status Distribution - Takes 3 columns */}
+                    <Card className="shadow-none lg:col-span-3">
                         <CardHeader>
-                            <CardTitle>Application Status</CardTitle>
+                            <CardTitle>Status Breakdown</CardTitle>
                             <CardDescription>
-                                Distribution of applications by current status
+                                Application status distribution
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             {stats.applicationsByStatus.length > 0 ? (
-                                <ChartContainer config={statusChartConfig} className="h-[250px]">
-                                    <PieChart>
-                                        <ChartTooltip content={<ChartTooltipContent />} />
-                                        <Pie
-                                            data={stats.applicationsByStatus}
-                                            dataKey="count"
-                                            nameKey="status"
-                                            cx="50%"
-                                            cy="50%"
-                                            outerRadius={80}
-                                            label={({ status, count }) => `${status}: ${count}`}
-                                            labelLine={false}
-                                        >
-                                            {stats.applicationsByStatus.map((entry, index) => (
-                                                <Cell
-                                                    key={`cell-${index}`}
-                                                    fill={statusColors[entry.status as keyof typeof statusColors]}
+                                <div className="space-y-6">
+                                    <ChartContainer config={statusChartConfig} className="h-[180px]">
+                                        <PieChart>
+                                            <ChartTooltip content={<ChartTooltipContent />} />
+                                            <Pie
+                                                data={stats.applicationsByStatus}
+                                                dataKey="count"
+                                                nameKey="status"
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={50}
+                                                outerRadius={80}
+                                            >
+                                                {stats.applicationsByStatus.map((entry, index) => (
+                                                    <Cell
+                                                        key={`cell-${index}`}
+                                                        fill={statusColors[entry.status as keyof typeof statusColors]}
+                                                    />
+                                                ))}
+                                            </Pie>
+                                        </PieChart>
+                                    </ChartContainer>
+                                    {/* Legend */}
+                                    <div className="flex justify-center gap-6">
+                                        {stats.applicationsByStatus.map((entry) => (
+                                            <div key={entry.status} className="flex items-center gap-2">
+                                                <div
+                                                    className="w-3 h-3 rounded-full"
+                                                    style={{ backgroundColor: statusColors[entry.status as keyof typeof statusColors] }}
                                                 />
-                                            ))}
-                                        </Pie>
-                                    </PieChart>
-                                </ChartContainer>
+                                                <span className="text-sm text-muted-foreground">
+                                                    {entry.status} ({entry.count})
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             ) : (
-                                <div className="h-[250px] flex items-center justify-center text-muted-foreground">
-                                    No application data yet
+                                <div className="h-[240px] flex flex-col items-center justify-center text-muted-foreground">
+                                    <PieChart className="h-12 w-12 mb-4 opacity-20" />
+                                    <p>No status data yet</p>
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Quick Stats Row */}
-                <div className="grid gap-4 md:grid-cols-3">
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Accepted</CardTitle>
-                            <CheckCircle className="h-4 w-4 text-green-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-green-600">{stats.acceptedApplications}</div>
-                            <p className="text-xs text-muted-foreground">candidates accepted</p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Pending</CardTitle>
-                            <Clock className="h-4 w-4 text-amber-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-amber-600">{stats.pendingApplications}</div>
-                            <p className="text-xs text-muted-foreground">awaiting review</p>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                            <CardTitle className="text-sm font-medium">Rejected</CardTitle>
-                            <XCircle className="h-4 w-4 text-red-500" />
-                        </CardHeader>
-                        <CardContent>
-                            <div className="text-2xl font-bold text-red-600">{stats.rejectedApplications}</div>
-                            <p className="text-xs text-muted-foreground">not selected</p>
                         </CardContent>
                     </Card>
                 </div>

@@ -246,56 +246,57 @@ export function Chatbot() {
                         </p>
                     </div>
                 ) : (
-                    messages.map((message, messageIndex) => {
-                        // Determine if this message is currently streaming
-                        const isLastMessage = messageIndex === messages.length - 1;
-                        const isAssistantMessage = message.role === 'assistant';
-                        const isCurrentlyStreaming = isLastMessage && isAssistantMessage && (status === 'streaming' || status === 'submitted');
+                    <>
+                        {messages.map((message, messageIndex) => {
+                            // Determine if this message is currently streaming
+                            const isLastMessage = messageIndex === messages.length - 1;
+                            const isAssistantMessage = message.role === 'assistant';
+                            const isCurrentlyStreaming = isLastMessage && isAssistantMessage && (status === 'streaming' || status === 'submitted');
 
-                        return (
-                            <div
-                                key={message.id}
-                                className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'
-                                    }`}
-                            >
-                                {/* Avatar */}
+                            return (
                                 <div
-                                    className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border ${message.role === 'user'
-                                        ? 'bg-muted border-border'
-                                        : 'bg-primary/10 border-primary/20'
-                                        }`}
+                                    key={message.id}
+                                    className={`flex gap-3 ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}
                                 >
-                                    {message.role === 'user' ? (
-                                        <User className="w-4 h-4 text-foreground" />
-                                    ) : (
-                                        <Bot className="w-4 h-4 text-primary" />
+                                    {/* Avatar - only show for user messages */}
+                                    {message.role === 'user' && (
+                                        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border bg-muted border-border">
+                                            <User className="w-4 h-4 text-foreground" />
+                                        </div>
                                     )}
-                                </div>
 
-                                {/* Message Bubble */}
-                                <div
-                                    className={`flex-1 ${message.role === 'user' ? 'text-right' : 'text-left'
-                                        }`}
-                                >
-                                    <div
-                                        className={`inline-block px-0 py-2 rounded-lg text-sm ${message.role === 'user'
-                                            ? 'bg-muted border border-border text-foreground px-4'
-                                            : 'text-foreground'
-                                            }`}
-                                    >
-                                        <div className="whitespace-pre-wrap break-words">
-                                            {message.parts.map((part, index) => {
-                                                if (part.type === 'text') {
-                                                    return <MessageContent key={index} text={part.text} isStreaming={isCurrentlyStreaming} />;
-                                                }
-                                                return null;
-                                            })}
+                                    {/* Message Bubble */}
+                                    <div className={`flex-1 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
+                                        <div
+                                            className={`inline-block px-0 py-2 rounded-lg text-sm ${message.role === 'user'
+                                                ? 'bg-muted border border-border text-foreground px-4'
+                                                : 'text-foreground'
+                                                }`}
+                                        >
+                                            <div className="whitespace-pre-wrap break-words">
+                                                {message.parts.map((part, index) => {
+                                                    if (part.type === 'text') {
+                                                        return <MessageContent key={index} text={part.text} isStreaming={isCurrentlyStreaming} />;
+                                                    }
+                                                    return null;
+                                                })}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
+                            );
+                        })}
+                        {/* Thinking indicator when waiting for response */}
+                        {status === 'submitted' && (
+                            <div className="flex gap-3">
+                                <div className="flex-1 text-left">
+                                    <div className="inline-block py-2 rounded-lg text-sm text-muted-foreground italic">
+                                        Thinking...
+                                    </div>
+                                </div>
                             </div>
-                        );
-                    })
+                        )}
+                    </>
                 )}
             </div>
             <div className='w-full py-4 px-2'>

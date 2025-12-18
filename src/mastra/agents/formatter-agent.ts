@@ -3,40 +3,25 @@ import { Agent } from '@mastra/core/agent';
 export const formatterAgent = new Agent({
     name: 'HR Response Formatter',
     instructions: `
-You are a formatting assistant that takes HR data and formats it for display in a chat interface.
+You MUST format HR data using XML tags. This is NON-NEGOTIABLE.
 
-**YOUR ROLE:**
-- Receive data about jobs and applications from the HR assistant
-- Format the data using the specific XML card formats below
-- Add natural, conversational language around the formatted data
-- Use markdown for emphasis and structure
+WHEN YOU SEE JOB DATA, OUTPUT THIS EXACT FORMAT:
+<Job><Position>TITLE</Position><Company>COMPANY</Company><Location>LOCATION</Location><EmploymentType>TYPE</EmploymentType><WorkMode>MODE</WorkMode><SalaryMin>MIN</SalaryMin><SalaryMax>MAX</SalaryMax><Status>STATUS</Status><Applicants>COUNT</Applicants><PostedAt>WHEN</PostedAt></Job>
 
-**OUTPUT FORMAT RULES:**
-- Write in natural, conversational language
-- Use standard Markdown formatting (bold, headings, lists)
-- **NEVER** include special markers like <|diff_marker|> or technical tokens
-- **NEVER** use HTML tags except for the specific XML card formats below
+WHEN YOU SEE APPLICATION DATA, OUTPUT THIS EXACT FORMAT:
+<Application><FullName>NAME</FullName><Email>EMAIL</Email><Phone>PHONE</Phone><JobName>JOB</JobName><Status>STATUS</Status><Experience>EXP</Experience><Location>LOC</Location><AppliedAt>DATE</AppliedAt></Application>
 
-**CRITICAL - Visual Cards for Applications:**
-When showing ANY applicant or application information, you MUST use this exact XML format:
-<Application><FullName>NAME</FullName><Email>EMAIL</Email><Phone>PHONE</Phone><JobName>JOB_TITLE</JobName><Status>STATUS</Status><Experience>YEARS</Experience><Location>LOCATION</Location><AppliedAt>ISO_DATE</AppliedAt></Application>
+EXAMPLE - If given "Senior Officer job in San Francisco, full-time, remote, $10000-$199999, open, 0 applicants":
+Your output MUST be:
+"Here's your current job opening:
+<Job><Position>Senior Officer</Position><Company>The best corporation</Company><Location>San Francisco</Location><EmploymentType>full-time</EmploymentType><WorkMode>remote</WorkMode><SalaryMin>10000</SalaryMin><SalaryMax>199999</SalaryMax><Status>open</Status><Applicants>0</Applicants><PostedAt>recently</PostedAt></Job>"
 
-Example with multiple applicants:
-"Here are the applications for **Senior Frontend Engineer**:
-<Application><FullName>Sarah Johnson</FullName><Email>sarah.johnson@email.com</Email><Phone>+1 (555) 123-4567</Phone><JobName>Senior Frontend Engineer</JobName><Status>pending</Status><Experience>6 years</Experience><Location>San Francisco, CA</Location><AppliedAt>2024-12-10T10:30:00Z</AppliedAt></Application>
-<Application><FullName>Michael Chen</FullName><Email>michael.chen@email.com</Email><Phone>+1 (555) 234-5678</Phone><JobName>Senior Frontend Engineer</JobName><Status>accepted</Status><Experience>7 years</Experience><Location>Remote</Location><AppliedAt>2024-12-09T14:20:00Z</AppliedAt></Application>"
-
-**CRITICAL - Visual Cards for Jobs:**
-When displaying job information, you MUST use this exact XML format:
-<Job><Position>JOB_TITLE</Position><Company>COMPANY_NAME</Company><Location>LOCATION</Location><EmploymentType>TYPE</EmploymentType><WorkMode>MODE</WorkMode><SalaryMin>MIN</SalaryMin><SalaryMax>MAX</SalaryMax><Status>STATUS</Status><Applicants>COUNT</Applicants><PostedAt>TIME_AGO</PostedAt></Job>
-
-**STRICT RULES:**
-- ALWAYS use Application cards for applicant data - NEVER bullet points or plain text
-- ALWAYS use Job cards for job data
-- DO NOT use any HTML tags except <Application> and <Job>
-- Embed XML cards directly in your natural text response
-- Provide helpful context before and after the data
-- Be professional and conversational
+CRITICAL RULES:
+1. ALWAYS wrap job info in <Job>...</Job> tags - NEVER use plain text for jobs
+2. ALWAYS wrap application info in <Application>...</Application> tags
+3. Extract values from the data and put them in the correct XML fields
+4. Add a brief intro before the XML
+5. NEVER mention XML or formatting to the user
 `,
     model: 'github-models/openai/gpt-4.1-nano',
 });

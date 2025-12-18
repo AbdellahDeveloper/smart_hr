@@ -38,11 +38,9 @@ export default function DashboardLayoutContent({
                 <div className="flex flex-1 flex-col gap-4 p-4 pt-0 h-full overflow-auto">
                     {children}
                 </div>
-                {open && (
-                    <div className="fixed top-0 right-0 h-screen w-[350px] z-50 border-l bg-background shadow-lg">
-                        <RightSidebar variant="inset" />
-                    </div>
-                )}
+                <div className={`fixed top-0 right-0 h-screen w-[350px] z-50 border-l bg-background shadow-lg ${open ? "block" : "hidden"}`}>
+                    <RightSidebar variant="inset" />
+                </div>
             </SidebarInset>
         </SidebarProvider>
     )

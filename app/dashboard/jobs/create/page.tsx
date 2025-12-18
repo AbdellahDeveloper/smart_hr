@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select"
 import { createJob } from "@/lib/actions/jobs"
 import { useSession } from "@/lib/auth-client"
+import { LoadingSwap } from "@/components/ui/loading-swap"
 
 type JobFormData = {
     position: string
@@ -124,11 +125,15 @@ export default function JobCreatePage() {
                         </p>
                     </div>
                     <div className="flex gap-3">
-                        <Button variant="outline" onClick={handleCancel}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleCreate}>
-                            Create Job
+                        {!isLoading && (
+                            <Button variant="outline" onClick={handleCancel}>
+                                Cancel
+                            </Button>
+                        )}
+                        <Button onClick={handleCreate} disabled={isLoading}>
+                            <LoadingSwap isLoading={isLoading}>
+                                Create Job
+                            </LoadingSwap>
                         </Button>
                     </div>
                 </div>

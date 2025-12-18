@@ -16,6 +16,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { getJobById, updateJob } from "@/lib/actions/jobs"
+import { LoadingSwap } from "@/components/ui/loading-swap"
 
 type Job = {
     id: string
@@ -154,11 +155,15 @@ export default function JobEditPage() {
                         </p>
                     </div>
                     <div className="flex gap-3">
-                        <Button variant="outline" onClick={handleCancel}>
-                            Cancel
-                        </Button>
-                        <Button onClick={handleSave}>
-                            Save Changes
+                        {!isSaving && (
+                            <Button variant="outline" onClick={handleCancel}>
+                                Cancel
+                            </Button>
+                        )}
+                        <Button onClick={handleSave} disabled={isSaving}>
+                            <LoadingSwap isLoading={isSaving}>
+                                Save Changes
+                            </LoadingSwap>
                         </Button>
                     </div>
                 </div>

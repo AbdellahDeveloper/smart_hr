@@ -11,13 +11,28 @@ const s3Client = new S3Client({
     forcePathStyle: true, // Required for some S3-compatible services
 })
 
-const BUCKET_NAME = "cvs"
+const CV_BUCKET = "cvs"
+const THUMBNAIL_BUCKET = "cv_thumbnails"
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+
+function constructUrl(bucket: string, key: string): string {
+    const endpoint = process.env.ENDPOINT
+    const region = process.env.REGION || "us-east-1"
+
+    if (endpoint) {
+        // For S3-compatible services (MinIO, DigitalOcean Spaces, etc.)
+        return `${endpoint}/${bucket}/${key}`
+    } else {
+        // For AWS S3
+        return `https://${bucket}.s3.${region}.amazonaws.com/${key}`
+    }
+}
 
 export async function POST(request: NextRequest) {
     try {
         const formData = await request.formData()
         const file = formData.get("file") as File | null
+        const thumbnail = formData.get("thumbnail") as string | null // Base64 data URL
 
         if (!file) {
             return NextResponse.json(
@@ -52,32 +67,47 @@ export async function POST(request: NextRequest) {
         const bytes = await file.arrayBuffer()
         const buffer = Buffer.from(bytes)
 
-        // Upload to S3
-        const command = new PutObjectCommand({
-            Bucket: BUCKET_NAME,
+        // Upload PDF to S3
+        const uploadCommand = new PutObjectCommand({
+            Bucket: CV_BUCKET,
             Key: key,
             Body: buffer,
             ContentType: "application/pdf",
             ContentDisposition: `attachment; filename="${file.name}"`,
         })
 
-        await s3Client.send(command)
+        await s3Client.send(uploadCommand)
 
-        // Construct the S3 URL
-        const endpoint = process.env.ENDPOINT
-        const region = process.env.REGION || "us-east-1"
+        // Upload thumbnail if provided
+        let thumbnailUrl: string | null = null
+        if (thumbnail && thumbnail.startsWith("data:image/png;base64,")) {
+            try {
+                const thumbnailKey = `${timestamp}-${randomString}-${sanitizedName.replace(".pdf", ".png")}`
 
-        let fileUrl: string
-        if (endpoint) {
-            // For S3-compatible services (MinIO, DigitalOcean Spaces, etc.)
-            fileUrl = `${endpoint}/${BUCKET_NAME}/${key}`
-        } else {
-            // For AWS S3
-            fileUrl = `https://${BUCKET_NAME}.s3.${region}.amazonaws.com/${key}`
+                // Convert base64 to buffer
+                const base64Data = thumbnail.replace("data:image/png;base64,", "")
+                const thumbnailBuffer = Buffer.from(base64Data, "base64")
+
+                const thumbnailCommand = new PutObjectCommand({
+                    Bucket: THUMBNAIL_BUCKET,
+                    Key: thumbnailKey,
+                    Body: thumbnailBuffer,
+                    ContentType: "image/png",
+                })
+
+                await s3Client.send(thumbnailCommand)
+                thumbnailUrl = constructUrl(THUMBNAIL_BUCKET, thumbnailKey)
+            } catch (thumbnailError) {
+                console.error("Error uploading thumbnail:", thumbnailError)
+                // Continue without thumbnail - don't fail the whole upload
+            }
         }
+
+        const fileUrl = constructUrl(CV_BUCKET, key)
 
         return NextResponse.json({
             url: fileUrl,
+            thumbnailUrl: thumbnailUrl,
             key: key,
             filename: file.name,
             size: file.size

@@ -2,8 +2,7 @@
 
 import * as React from "react"
 import { useRouter } from "next/navigation"
-import { Search, Briefcase, MapPin } from "lucide-react"
-import { Input } from "@/components/ui/input"
+import { Search, MapPin } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "./ui/input-group"
@@ -223,7 +222,6 @@ export function SearchSuggestions({
                                         onClick={() => handleSelect(suggestion)}
                                         onMouseEnter={() => setSelectedIndex(index)}
                                     >
-                                        <Briefcase className="h-4 w-4 text-blue-500 shrink-0" />
                                         <div className="flex flex-col items-start min-w-0">
                                             <span className="font-medium truncate w-full text-left">
                                                 {suggestion.position}

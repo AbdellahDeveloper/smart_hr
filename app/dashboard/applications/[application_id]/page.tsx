@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowLeft, Mail, Phone, MapPin, Calendar, FileText, Briefcase, User, UserCircle2 } from "lucide-react"
 import { toast } from "sonner"
 import { getApplicationById, updateApplicationStatus } from "@/lib/actions/applications"
+import Link from "next/link"
 
 type Application = {
     id: string
@@ -66,16 +67,15 @@ export default function ApplicationDetailPage() {
 
     if (!application) {
         return (
-            <div className="w-full p-6">
-                <div className="flex items-center gap-4 mb-6">
-                    <Button variant="ghost" size="icon" onClick={() => router.back()}>
-                        <ArrowLeft className="h-5 w-5" />
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <h1 className="text-2xl font-bold mb-2">Application Not Found</h1>
+                    <p className="text-muted-foreground mb-4">The application you're looking for doesn't exist.</p>
+                    <Link href="/dashboard/applications"><Button>
+                        Back to Applications
                     </Button>
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Application Not Found</h1>
-                    </div>
+                    </Link>
                 </div>
-                <p className="text-muted-foreground">The application you're looking for doesn't exist.</p>
             </div>
         )
     }

@@ -1,4 +1,4 @@
-import { Briefcase, MapPin, DollarSign, Users, Clock, Building } from 'lucide-react';
+import { MapPin, DollarSign, Users, Clock, Building } from 'lucide-react';
 
 interface JobCardProps {
     position: string;
@@ -42,9 +42,6 @@ export function JobCard({
                 <div className="space-y-4">
                     {/* Position Title */}
                     <div className="flex items-center gap-2">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10">
-                            <Briefcase className="w-4 h-4 text-primary" />
-                        </div>
                         <h3 className="text-lg font-semibold text-foreground">{position}</h3>
                     </div>
 

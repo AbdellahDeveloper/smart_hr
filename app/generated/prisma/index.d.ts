@@ -7179,6 +7179,7 @@ export namespace Prisma {
     email: string | null
     phone: string | null
     cvUrl: string | null
+    thumbnailUrl: string | null
     coverLetter: string | null
     status: string | null
     appliedAt: Date | null
@@ -7196,6 +7197,7 @@ export namespace Prisma {
     email: string | null
     phone: string | null
     cvUrl: string | null
+    thumbnailUrl: string | null
     coverLetter: string | null
     status: string | null
     appliedAt: Date | null
@@ -7213,6 +7215,7 @@ export namespace Prisma {
     email: number
     phone: number
     cvUrl: number
+    thumbnailUrl: number
     coverLetter: number
     status: number
     appliedAt: number
@@ -7232,6 +7235,7 @@ export namespace Prisma {
     email?: true
     phone?: true
     cvUrl?: true
+    thumbnailUrl?: true
     coverLetter?: true
     status?: true
     appliedAt?: true
@@ -7249,6 +7253,7 @@ export namespace Prisma {
     email?: true
     phone?: true
     cvUrl?: true
+    thumbnailUrl?: true
     coverLetter?: true
     status?: true
     appliedAt?: true
@@ -7266,6 +7271,7 @@ export namespace Prisma {
     email?: true
     phone?: true
     cvUrl?: true
+    thumbnailUrl?: true
     coverLetter?: true
     status?: true
     appliedAt?: true
@@ -7356,6 +7362,7 @@ export namespace Prisma {
     email: string
     phone: string
     cvUrl: string | null
+    thumbnailUrl: string | null
     coverLetter: string | null
     status: string
     appliedAt: Date
@@ -7390,6 +7397,7 @@ export namespace Prisma {
     email?: boolean
     phone?: boolean
     cvUrl?: boolean
+    thumbnailUrl?: boolean
     coverLetter?: boolean
     status?: boolean
     appliedAt?: boolean
@@ -7408,6 +7416,7 @@ export namespace Prisma {
     email?: boolean
     phone?: boolean
     cvUrl?: boolean
+    thumbnailUrl?: boolean
     coverLetter?: boolean
     status?: boolean
     appliedAt?: boolean
@@ -7426,6 +7435,7 @@ export namespace Prisma {
     email?: boolean
     phone?: boolean
     cvUrl?: boolean
+    thumbnailUrl?: boolean
     coverLetter?: boolean
     status?: boolean
     appliedAt?: boolean
@@ -7444,6 +7454,7 @@ export namespace Prisma {
     email?: boolean
     phone?: boolean
     cvUrl?: boolean
+    thumbnailUrl?: boolean
     coverLetter?: boolean
     status?: boolean
     appliedAt?: boolean
@@ -7454,7 +7465,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type ApplicationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "fullName" | "gender" | "email" | "phone" | "cvUrl" | "coverLetter" | "status" | "appliedAt" | "experience" | "location" | "jobId" | "createdAt" | "updatedAt", ExtArgs["result"]["application"]>
+  export type ApplicationOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "fullName" | "gender" | "email" | "phone" | "cvUrl" | "thumbnailUrl" | "coverLetter" | "status" | "appliedAt" | "experience" | "location" | "jobId" | "createdAt" | "updatedAt", ExtArgs["result"]["application"]>
   export type ApplicationInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     job?: boolean | JobDefaultArgs<ExtArgs>
   }
@@ -7477,6 +7488,7 @@ export namespace Prisma {
       email: string
       phone: string
       cvUrl: string | null
+      thumbnailUrl: string | null
       coverLetter: string | null
       status: string
       appliedAt: Date
@@ -7915,6 +7927,7 @@ export namespace Prisma {
     readonly email: FieldRef<"Application", 'String'>
     readonly phone: FieldRef<"Application", 'String'>
     readonly cvUrl: FieldRef<"Application", 'String'>
+    readonly thumbnailUrl: FieldRef<"Application", 'String'>
     readonly coverLetter: FieldRef<"Application", 'String'>
     readonly status: FieldRef<"Application", 'String'>
     readonly appliedAt: FieldRef<"Application", 'DateTime'>
@@ -8444,6 +8457,7 @@ export namespace Prisma {
     email: 'email',
     phone: 'phone',
     cvUrl: 'cvUrl',
+    thumbnailUrl: 'thumbnailUrl',
     coverLetter: 'coverLetter',
     status: 'status',
     appliedAt: 'appliedAt',
@@ -9000,6 +9014,7 @@ export namespace Prisma {
     email?: StringFilter<"Application"> | string
     phone?: StringFilter<"Application"> | string
     cvUrl?: StringNullableFilter<"Application"> | string | null
+    thumbnailUrl?: StringNullableFilter<"Application"> | string | null
     coverLetter?: StringNullableFilter<"Application"> | string | null
     status?: StringFilter<"Application"> | string
     appliedAt?: DateTimeFilter<"Application"> | Date | string
@@ -9018,6 +9033,7 @@ export namespace Prisma {
     email?: SortOrder
     phone?: SortOrder
     cvUrl?: SortOrderInput | SortOrder
+    thumbnailUrl?: SortOrderInput | SortOrder
     coverLetter?: SortOrderInput | SortOrder
     status?: SortOrder
     appliedAt?: SortOrder
@@ -9039,6 +9055,7 @@ export namespace Prisma {
     email?: StringFilter<"Application"> | string
     phone?: StringFilter<"Application"> | string
     cvUrl?: StringNullableFilter<"Application"> | string | null
+    thumbnailUrl?: StringNullableFilter<"Application"> | string | null
     coverLetter?: StringNullableFilter<"Application"> | string | null
     status?: StringFilter<"Application"> | string
     appliedAt?: DateTimeFilter<"Application"> | Date | string
@@ -9057,6 +9074,7 @@ export namespace Prisma {
     email?: SortOrder
     phone?: SortOrder
     cvUrl?: SortOrderInput | SortOrder
+    thumbnailUrl?: SortOrderInput | SortOrder
     coverLetter?: SortOrderInput | SortOrder
     status?: SortOrder
     appliedAt?: SortOrder
@@ -9080,6 +9098,7 @@ export namespace Prisma {
     email?: StringWithAggregatesFilter<"Application"> | string
     phone?: StringWithAggregatesFilter<"Application"> | string
     cvUrl?: StringNullableWithAggregatesFilter<"Application"> | string | null
+    thumbnailUrl?: StringNullableWithAggregatesFilter<"Application"> | string | null
     coverLetter?: StringNullableWithAggregatesFilter<"Application"> | string | null
     status?: StringWithAggregatesFilter<"Application"> | string
     appliedAt?: DateTimeWithAggregatesFilter<"Application"> | Date | string
@@ -9607,6 +9626,7 @@ export namespace Prisma {
     email: string
     phone: string
     cvUrl?: string | null
+    thumbnailUrl?: string | null
     coverLetter?: string | null
     status?: string
     appliedAt?: Date | string
@@ -9624,6 +9644,7 @@ export namespace Prisma {
     email: string
     phone: string
     cvUrl?: string | null
+    thumbnailUrl?: string | null
     coverLetter?: string | null
     status?: string
     appliedAt?: Date | string
@@ -9641,6 +9662,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     phone?: StringFieldUpdateOperationsInput | string
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thumbnailUrl?: NullableStringFieldUpdateOperationsInput | string | null
     coverLetter?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
     appliedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9658,6 +9680,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     phone?: StringFieldUpdateOperationsInput | string
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thumbnailUrl?: NullableStringFieldUpdateOperationsInput | string | null
     coverLetter?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
     appliedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9675,6 +9698,7 @@ export namespace Prisma {
     email: string
     phone: string
     cvUrl?: string | null
+    thumbnailUrl?: string | null
     coverLetter?: string | null
     status?: string
     appliedAt?: Date | string
@@ -9692,6 +9716,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     phone?: StringFieldUpdateOperationsInput | string
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thumbnailUrl?: NullableStringFieldUpdateOperationsInput | string | null
     coverLetter?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
     appliedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -9708,6 +9733,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     phone?: StringFieldUpdateOperationsInput | string
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thumbnailUrl?: NullableStringFieldUpdateOperationsInput | string | null
     coverLetter?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
     appliedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -10167,6 +10193,7 @@ export namespace Prisma {
     email?: SortOrder
     phone?: SortOrder
     cvUrl?: SortOrder
+    thumbnailUrl?: SortOrder
     coverLetter?: SortOrder
     status?: SortOrder
     appliedAt?: SortOrder
@@ -10184,6 +10211,7 @@ export namespace Prisma {
     email?: SortOrder
     phone?: SortOrder
     cvUrl?: SortOrder
+    thumbnailUrl?: SortOrder
     coverLetter?: SortOrder
     status?: SortOrder
     appliedAt?: SortOrder
@@ -10201,6 +10229,7 @@ export namespace Prisma {
     email?: SortOrder
     phone?: SortOrder
     cvUrl?: SortOrder
+    thumbnailUrl?: SortOrder
     coverLetter?: SortOrder
     status?: SortOrder
     appliedAt?: SortOrder
@@ -11077,6 +11106,7 @@ export namespace Prisma {
     email: string
     phone: string
     cvUrl?: string | null
+    thumbnailUrl?: string | null
     coverLetter?: string | null
     status?: string
     appliedAt?: Date | string
@@ -11093,6 +11123,7 @@ export namespace Prisma {
     email: string
     phone: string
     cvUrl?: string | null
+    thumbnailUrl?: string | null
     coverLetter?: string | null
     status?: string
     appliedAt?: Date | string
@@ -11181,6 +11212,7 @@ export namespace Prisma {
     email?: StringFilter<"Application"> | string
     phone?: StringFilter<"Application"> | string
     cvUrl?: StringNullableFilter<"Application"> | string | null
+    thumbnailUrl?: StringNullableFilter<"Application"> | string | null
     coverLetter?: StringNullableFilter<"Application"> | string | null
     status?: StringFilter<"Application"> | string
     appliedAt?: DateTimeFilter<"Application"> | Date | string
@@ -11480,6 +11512,7 @@ export namespace Prisma {
     email: string
     phone: string
     cvUrl?: string | null
+    thumbnailUrl?: string | null
     coverLetter?: string | null
     status?: string
     appliedAt?: Date | string
@@ -11496,6 +11529,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     phone?: StringFieldUpdateOperationsInput | string
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thumbnailUrl?: NullableStringFieldUpdateOperationsInput | string | null
     coverLetter?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
     appliedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11512,6 +11546,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     phone?: StringFieldUpdateOperationsInput | string
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thumbnailUrl?: NullableStringFieldUpdateOperationsInput | string | null
     coverLetter?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
     appliedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -11528,6 +11563,7 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     phone?: StringFieldUpdateOperationsInput | string
     cvUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    thumbnailUrl?: NullableStringFieldUpdateOperationsInput | string | null
     coverLetter?: NullableStringFieldUpdateOperationsInput | string | null
     status?: StringFieldUpdateOperationsInput | string
     appliedAt?: DateTimeFieldUpdateOperationsInput | Date | string

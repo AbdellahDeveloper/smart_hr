@@ -108,18 +108,11 @@ export function JobDetailsClient({ job }: JobDetailsClientProps) {
 
             {/* Apply Form - Full Width when shown */}
             {showApplyForm && (
-                <div className="mb-8">
-                    <div className="flex justify-end mb-4">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setShowApplyForm(false)}
-                        >
-                            <X className="h-5 w-5" />
-                        </Button>
-                    </div>
-                    <ApplyForm jobId={job.id} jobTitle={job.position} />
-                </div>
+                <ApplyForm
+                    jobId={job.id}
+                    jobTitle={job.position}
+                    onCancel={() => setShowApplyForm(false)}
+                />
             )}
 
             {!showApplyForm && (

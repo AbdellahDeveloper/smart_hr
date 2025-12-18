@@ -198,6 +198,7 @@ exports.Prisma.ApplicationScalarFieldEnum = {
   email: 'email',
   phone: 'phone',
   cvUrl: 'cvUrl',
+  thumbnailUrl: 'thumbnailUrl',
   coverLetter: 'coverLetter',
   status: 'status',
   appliedAt: 'appliedAt',

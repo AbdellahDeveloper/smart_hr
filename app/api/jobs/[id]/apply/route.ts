@@ -3,11 +3,12 @@ import { prisma } from "@/lib/prisma"
 import { z } from "zod"
 
 const applicationSchema = z.object({
-    fullName: z.string().min(2, "Full name is required"),
-    gender: z.enum(["male", "female"]),
-    email: z.string().email("Valid email is required"),
-    phone: z.string().min(5, "Phone number is required"),
-    cvUrl: z.string().url().optional().or(z.literal("")),
+    fullName: z.string().min(2, "Full name must be at least 2 characters"),
+    gender: z.enum(["male", "female"], { message: "Please select a gender" }),
+    email: z.string().email("Please enter a valid email address"),
+    phone: z.string().min(5, "Phone number must be at least 5 characters"),
+    cvUrl: z.string().url("CV is required - please upload a PDF file"),
+    thumbnailUrl: z.string().url().optional().or(z.literal("")).or(z.null()),
     coverLetter: z.string().optional(),
     experience: z.string().optional(),
     location: z.string().optional(),
@@ -62,8 +63,15 @@ export async function POST(
         // Create application
         const application = await prisma.application.create({
             data: {
-                ...validatedData,
-                cvUrl: validatedData.cvUrl || null,
+                fullName: validatedData.fullName,
+                gender: validatedData.gender,
+                email: validatedData.email,
+                phone: validatedData.phone,
+                cvUrl: validatedData.cvUrl,
+                thumbnailUrl: validatedData.thumbnailUrl || null,
+                coverLetter: validatedData.coverLetter || null,
+                experience: validatedData.experience || null,
+                location: validatedData.location || null,
                 jobId,
             }
         })

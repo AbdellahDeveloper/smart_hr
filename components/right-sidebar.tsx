@@ -13,13 +13,10 @@ import { X } from "lucide-react"
 
 
 export function RightSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-    const { open, toggleSidebar } = useRightSidebar()
-    if (!open) {
-        return null
-    }
+    const { toggleSidebar } = useRightSidebar()
 
     return (
-        <Sidebar className="w-full" side="right" collapsible="none" variant="inset" {...props}>
+        <Sidebar className="w-full h-full" side="right" collapsible="none" variant="inset" {...props}>
             <SidebarHeader className="border-b px-4 py-3 w-full">
                 <div className="flex items-center justify-between">
                     <div>
@@ -45,3 +42,4 @@ export function RightSidebar({ ...props }: React.ComponentProps<typeof Sidebar>)
         </Sidebar>
     )
 }
+
