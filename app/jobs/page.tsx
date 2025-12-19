@@ -24,7 +24,7 @@ async function getJobs(searchParams: SearchParams): Promise<{
     if (searchParams.page) params.set("page", searchParams.page)
 
     // Use absolute URL for server-side fetching
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
+    const baseUrl = process.env.NEXT_PUBLIC_WEBSITE_URL
     const response = await fetch(`${baseUrl}/api/jobs?${params.toString()}`, {
         cache: "no-store",
     })
