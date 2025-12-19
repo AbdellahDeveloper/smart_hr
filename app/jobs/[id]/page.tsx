@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation"
+import { prisma } from "@/lib/prisma"
 import { JobDetailsClient } from "./_components/job-details-client"
 
 interface JobDetails {
@@ -23,18 +24,46 @@ interface JobDetails {
 }
 
 async function getJob(id: string): Promise<JobDetails | null> {
-    const baseUrl = process.env.NEXT_PUBLIC_WEBSITE_URL
-
     try {
-        const response = await fetch(`${baseUrl}/api/jobs/${id}`, {
-            cache: "no-store",
+        const job = await prisma.job.findUnique({
+            where: { id },
+            include: {
+                user: {
+                    select: {
+                        companyName: true,
+                        image: true,
+                    }
+                },
+                _count: {
+                    select: { applications: true }
+                }
+            }
         })
 
-        if (!response.ok) {
+        if (!job) {
             return null
         }
 
-        return response.json()
+        return {
+            id: job.id,
+            position: job.position,
+            company: job.company,
+            logo: job.logo,
+            location: job.location,
+            employmentType: job.employmentType,
+            workMode: job.workMode,
+            salaryMin: job.salaryMin,
+            salaryMax: job.salaryMax,
+            salaryCurrency: job.salaryCurrency,
+            description: job.description,
+            tags: job.tags,
+            postedAt: job.postedAt.toISOString(),
+            applicants: job._count.applications,
+            user: job.user ? {
+                companyName: job.user.companyName,
+                image: job.user.image,
+            } : undefined
+        }
     } catch {
         return null
     }

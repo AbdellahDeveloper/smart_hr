@@ -1,4 +1,5 @@
 import { Suspense } from "react"
+import { prisma } from "@/lib/prisma"
 import { JobCard, type Job } from "@/components/job-card"
 import { JobsFilter } from "@/components/jobs-filter"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -15,25 +16,82 @@ async function getJobs(searchParams: SearchParams): Promise<{
     jobs: Job[]
     pagination: { page: number; limit: number; total: number; totalPages: number }
 }> {
-    const params = new URLSearchParams()
+    const page = parseInt(searchParams.page || "1")
+    const limit = 10
 
-    if (searchParams.search) params.set("search", searchParams.search)
-    if (searchParams.employmentType) params.set("employmentType", searchParams.employmentType)
-    if (searchParams.workMode) params.set("workMode", searchParams.workMode)
-    if (searchParams.location) params.set("location", searchParams.location)
-    if (searchParams.page) params.set("page", searchParams.page)
-
-    // Use absolute URL for server-side fetching
-    const baseUrl = process.env.NEXT_PUBLIC_WEBSITE_URL
-    const response = await fetch(`${baseUrl}/api/jobs?${params.toString()}`, {
-        cache: "no-store",
-    })
-
-    if (!response.ok) {
-        throw new Error("Failed to fetch jobs")
+    // Build where clause
+    const where: Record<string, unknown> = {
+        status: "open"
     }
 
-    return response.json()
+    if (searchParams.search) {
+        where.OR = [
+            { position: { contains: searchParams.search, mode: "insensitive" } },
+            { company: { contains: searchParams.search, mode: "insensitive" } },
+            { description: { contains: searchParams.search, mode: "insensitive" } },
+        ]
+    }
+
+    if (searchParams.employmentType) {
+        where.employmentType = searchParams.employmentType
+    }
+
+    if (searchParams.workMode) {
+        where.workMode = searchParams.workMode
+    }
+
+    if (searchParams.location) {
+        where.location = { contains: searchParams.location, mode: "insensitive" }
+    }
+
+    const [jobs, total] = await Promise.all([
+        prisma.job.findMany({
+            where,
+            orderBy: { postedAt: "desc" },
+            skip: (page - 1) * limit,
+            take: limit,
+            include: {
+                user: {
+                    select: {
+                        companyName: true,
+                        image: true,
+                    }
+                },
+                _count: {
+                    select: { applications: true }
+                }
+            }
+        }),
+        prisma.job.count({ where })
+    ])
+
+    const mappedJobs: Job[] = jobs.map(job => ({
+        id: job.id,
+        position: job.position,
+        company: job.company,
+        logo: job.logo,
+        location: job.location,
+        employmentType: job.employmentType as Job["employmentType"],
+        workMode: job.workMode as Job["workMode"],
+        salaryMin: job.salaryMin,
+        salaryMax: job.salaryMax,
+        salaryCurrency: job.salaryCurrency,
+        status: job.status as Job["status"],
+        description: job.description,
+        tags: job.tags,
+        postedAt: job.postedAt.toISOString(),
+        applicants: job._count.applications,
+    }))
+
+    return {
+        jobs: mappedJobs,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit)
+        }
+    }
 }
 
 function JobsSkeleton() {
